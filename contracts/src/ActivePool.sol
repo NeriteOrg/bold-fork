@@ -3,6 +3,7 @@
 pragma solidity 0.8.24;
 
 import "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {ERC20Votes} from '@openzeppelin/token/ERC20/extensions/ERC20Votes.sol';
 import "openzeppelin-contracts/contracts/utils/math/Math.sol";
 
 import "./Dependencies/Constants.sol";
@@ -61,6 +62,8 @@ contract ActivePool is IActivePool {
     // Last time at which the aggregate batch fees and weighted sum were updated
     uint256 public lastAggBatchManagementFeesUpdateTime;
 
+    address public delegatee;
+
     // --- Events ---
 
     event CollTokenAddressChanged(address _newCollTokenAddress);
@@ -71,7 +74,7 @@ contract ActivePool is IActivePool {
     event ActivePoolBoldDebtUpdated(uint256 _recordedDebtSum);
     event ActivePoolCollBalanceUpdated(uint256 _collBalance);
 
-    constructor(IAddressesRegistry _addressesRegistry) {
+    constructor(IAddressesRegistry _addressesRegistry, address _delegatee) {
         collToken = _addressesRegistry.collToken();
         borrowerOperationsAddress = address(_addressesRegistry.borrowerOperations());
         troveManagerAddress = address(_addressesRegistry.troveManager());
@@ -88,6 +91,8 @@ contract ActivePool is IActivePool {
 
         // Allow funds movements between Liquity contracts
         collToken.approve(defaultPoolAddress, type(uint256).max);
+
+        delegatee = _delegatee;
     }
 
     // --- Getters for public variables. Required by IPool interface ---
@@ -146,8 +151,8 @@ contract ActivePool is IActivePool {
         newAggWeightedDebtSum += _troveChange.newWeightedRecordedDebt;
         newAggWeightedDebtSum -= _troveChange.oldWeightedRecordedDebt;
 
-        // Avoid division by 0 if the first ever borrower tries to borrow 0 BOLD
-        // Borrowing 0 BOLD is not allowed, but our check of debt >= MIN_DEBT happens _after_ calculating the upfront
+        // Avoid division by 0 if the first ever borrower tries to borrow 0 USDN
+        // Borrowing 0 USDN is not allowed, but our check of debt >= MIN_DEBT happens _after_ calculating the upfront
         // fee, which involves getting the new approx. avg. interest rate
         return newAggRecordedDebt > 0 ? newAggWeightedDebtSum / newAggRecordedDebt : 0;
     }
@@ -341,5 +346,16 @@ contract ActivePool is IActivePool {
 
     function _requireCallerIsTroveManager() internal view {
         require(msg.sender == troveManagerAddress, "ActivePool: Caller is not TroveManager");
+    }
+
+    // Delegate all available tokens to the delegatee.
+    // Anyone can call this to initiate delegation, but only the delegatee can update who the delegatee is.
+    function delegateAvailableTokens(address _targetToken) external{
+        ERC20Votes(_targetToken).delegate(delegatee);
+    }
+
+    function updateDelegate(address _newDelegate) external{
+        require(msg.sender == delegatee, "ActivePool: Only delegatee can update thedelegate");
+        delegatee = _newDelegate;
     }
 }
