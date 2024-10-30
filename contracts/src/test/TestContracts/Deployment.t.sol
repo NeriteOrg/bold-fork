@@ -462,8 +462,8 @@ contract TestDeployer is MetadataDeployment {
         contracts.borrowerOperations = new BorrowerOperationsTester{salt: SALT}(contracts.addressesRegistry);
         contracts.troveManager = new TroveManagerTester{salt: SALT}(contracts.addressesRegistry);
         contracts.troveNFT = new TroveNFT{salt: SALT}(contracts.addressesRegistry);
-        contracts.stabilityPool = new StabilityPool{salt: SALT}(contracts.addressesRegistry, msg.sender);
-        contracts.activePool = new ActivePool{salt: SALT}(contracts.addressesRegistry);
+        contracts.stabilityPool = new StabilityPool{salt: SALT}(contracts.addressesRegistry);
+        contracts.activePool = new ActivePool{salt: SALT}(contracts.addressesRegistry, msg.sender);
         contracts.defaultPool = new DefaultPool{salt: SALT}(contracts.addressesRegistry);
         contracts.gasPool = new GasPool{salt: SALT}(contracts.addressesRegistry);
         contracts.collSurplusPool = new CollSurplusPool{salt: SALT}(contracts.addressesRegistry);
