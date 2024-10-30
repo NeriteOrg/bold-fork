@@ -43,4 +43,6 @@ interface IActivePool {
     function sendCollToDefaultPool(uint256 _amount) external;
     function receiveColl(uint256 _amount) external;
     function accountForReceivedColl(uint256 _amount) external;
+
+    function delegateAvailableTokens(address _targetToken) external;
 }
