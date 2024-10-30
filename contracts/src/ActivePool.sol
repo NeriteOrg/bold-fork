@@ -3,7 +3,7 @@
 pragma solidity 0.8.24;
 
 import "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ERC20Votes} from '@openzeppelin/token/ERC20/extensions/ERC20Votes.sol';
+import {ERC20Votes} from "openzeppelin-contracts/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "openzeppelin-contracts/contracts/utils/math/Math.sol";
 
 import "./Dependencies/Constants.sol";
