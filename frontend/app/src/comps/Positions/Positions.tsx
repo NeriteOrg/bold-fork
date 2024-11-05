@@ -135,7 +135,7 @@ function PositionsGroup({
     .exhaustive();
 
   if (mode === "actions") {
-    columns = 4;
+    columns = 3;
   }
 
   const cardHeight = mode === "actions" ? 144 : 188;

@@ -20,7 +20,7 @@ export function MenuDrawer({
   sections: MenuSection[];
 }) {
   const [heights, setHeights] = useState<number[]>(
-    Array.from({ length: sections.length }).fill(0) as number[],
+    Array.from({ length: sections.length }).fill(0) as number[]
   );
 
   const tallestHeight = Math.max(...heights);
@@ -32,7 +32,7 @@ export function MenuDrawer({
     },
     to: {
       shadowOpacity: opened === -1 ? 0 : 1,
-      transform: `translateY(${(opened === -1 ? 0 : heights[opened])}px)`,
+      transform: `translateY(${opened === -1 ? 0 : heights[opened]}px)`,
     },
     config: {
       mass: 1,
@@ -60,7 +60,8 @@ export function MenuDrawer({
           zIndex: 2,
           inset: `${tallestHeight}px 0 auto 0`,
           height: 32,
-          background: "linear-gradient(180deg, token(colors.background) 0%, transparent 100%)",
+          background:
+            "linear-gradient(180deg, token(colors.background) 0%, transparent 100%)",
           pointerEvents: "none",
         })}
       />
@@ -122,13 +123,16 @@ function DrawerSection({
   const ref = useRef<HTMLDivElement>(null);
   useElementSize(
     ref,
-    useCallback((size: ResizeObserverSize) => {
-      setSectionsHeights((heights) => (
-        heights.map((height, j) => (
-          sectionIndex === j ? size.blockSize : height
-        ))
-      ));
-    }, [sectionIndex, setSectionsHeights]),
+    useCallback(
+      (size: ResizeObserverSize) => {
+        setSectionsHeights((heights) =>
+          heights.map((height, j) =>
+            sectionIndex === j ? size.blockSize : height
+          )
+        );
+      },
+      [sectionIndex, setSectionsHeights]
+    )
   );
 
   const spring = useSpring({
@@ -179,10 +183,7 @@ function DrawerSection({
             })}
           >
             {section.actions.map((action) => (
-              <DrawerAction
-                key={action.href + action.token}
-                action={action}
-              />
+              <DrawerAction key={action.href + action.token} action={action} />
             ))}
           </div>
         )}
@@ -245,11 +246,7 @@ function DrawerSectionLink({
   );
 }
 
-function DrawerAction({
-  action,
-}: {
-  action: MenuSection["actions"][number];
-}) {
+function DrawerAction({ action }: { action: MenuSection["actions"][number] }) {
   const ha = useHoverActive();
 
   const hoverSpring = useSpring({
@@ -271,7 +268,7 @@ function DrawerAction({
         "group",
         css({
           outline: "none",
-        }),
+        })
       )}
     >
       <a.div
@@ -301,10 +298,7 @@ function DrawerAction({
             paddingBottom: 12,
           })}
         >
-          <TokenIcon
-            size="small"
-            symbol={action.token}
-          />
+          <TokenIcon size='small' symbol={action.token} />
         </div>
         <div>{action.name}</div>
         <div>{action.secondary}</div>
