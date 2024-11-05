@@ -5,7 +5,7 @@ import type { ReactNode as N } from "react";
 
 export default {
   // Used in the top bar and other places
-  appName: "Liquity V2",
+  appName: "Nerite",
 
   // Menu bar
   menu: {
@@ -30,9 +30,11 @@ export default {
       "Redemption risk",
       <>
         If the price of BOLD is lower than $1,{" "}
-        <Link href="https://github.com/liquity/bold#bold-redemptions">redemptions</Link>{" "}
-        are possible. Redemptions first affect loans with the lowest interest rate.
-        Raising the interest rate reduces the redemption risk.
+        <Link href='https://github.com/liquity/bold#bold-redemptions'>
+          redemptions
+        </Link>{" "}
+        are possible. Redemptions first affect loans with the lowest interest
+        rate. Raising the interest rate reduces the redemption risk.
       </>,
     ],
     loanLtv: [
@@ -89,13 +91,15 @@ export default {
   closeLoan: {
     repayWithBoldMessage: (
       <>
-        You are repaying your debt and closing the position. The deposit will be returned to your wallet.
+        You are repaying your debt and closing the position. The deposit will be
+        returned to your wallet.
       </>
     ),
     repayWithCollateralMessage: (
       <>
-        To close your position, a part of your collateral will be sold to pay back the debt. The rest of your collateral
-        will be returned to your wallet.
+        To close your position, a part of your collateral will be sold to pay
+        back the debt. The rest of your collateral will be returned to your
+        wallet.
       </>
     ),
   },
@@ -107,11 +111,13 @@ export default {
     actions: {
       borrow: {
         title: "Borrow BOLD",
-        description: "Set your own interest rate and borrow BOLD against ETH and staked ETH.",
+        description:
+          "Set your own interest rate and borrow BOLD against ETH and staked ETH.",
       },
       leverage: {
         title: "Leverage ETH",
-        description: "Set your own interest rate and increase your exposure to ETH and staked ETH.",
+        description:
+          "Set your own interest rate and increase your exposure to ETH and staked ETH.",
       },
       earn: {
         title: "Earn with BOLD",
@@ -119,7 +125,8 @@ export default {
       },
       stake: {
         title: "Stake LQTY",
-        description: "Accrue voting power by staking your LQTY without a minimum lockup period.",
+        description:
+          "Accrue voting power by staking your LQTY without a minimum lockup period.",
       },
     },
     statsBar: {
@@ -173,11 +180,7 @@ export default {
 
   // Leverage screen
   leverageScreen: {
-    headline: (tokensIcons: N) => (
-      <>
-        Leverage your exposure to {tokensIcons}
-      </>
-    ),
+    headline: (tokensIcons: N) => <>Leverage your exposure to {tokensIcons}</>,
     depositField: {
       label: "You deposit",
     },
@@ -212,8 +215,9 @@ export default {
     ),
     subheading: (
       <>
-        A BOLD deposit in a stability pool earns rewards from the fees that users pay on their loans. Also, in case the
-        system needs to liquidate positions, the BOLD may be swapped to collateral.
+        A BOLD deposit in a stability pool earns rewards from the fees that
+        users pay on their loans. Also, in case the system needs to liquidate
+        positions, the BOLD may be swapped to collateral.
       </>
     ),
     poolsColumns: {
@@ -234,12 +238,12 @@ export default {
     headerPool: (pool: N) => <>{pool} pool</>,
     headerTvl: (tvl: N) => (
       <>
-        <abbr title="Total Value Locked">TVL</abbr> {tvl}
+        <abbr title='Total Value Locked'>TVL</abbr> {tvl}
       </>
     ),
     headerApr: () => (
       <>
-        Current <abbr title="Annual percentage rate">APR</abbr>
+        Current <abbr title='Annual percentage rate'>APR</abbr>
       </>
     ),
     accountPosition: {
@@ -263,8 +267,10 @@ export default {
       action: "Next: Summary",
     },
     rewardsPanel: {
-      boldRewardsLabel: "Your earnings from protocol revenue distributions to this stability pool",
-      collRewardsLabel: "Your proceeds from liquidations conducted by this stability pool",
+      boldRewardsLabel:
+        "Your earnings from protocol revenue distributions to this stability pool",
+      collRewardsLabel:
+        "Your proceeds from liquidations conducted by this stability pool",
       totalUsdLabel: "Total in USD",
       expectedGasFeeLabel: "Expected gas fee",
       action: "Next: Summary",
@@ -283,8 +289,10 @@ export default {
       ],
       alsoClaimRewardsWithdraw: [
         <>
-          If checked, rewards are paid out as part of the update transaction.<br />
-          Note: This needs to be checked to fully withdraw from the Stability Pool.
+          If checked, rewards are paid out as part of the update transaction.
+          <br />
+          Note: This needs to be checked to fully withdraw from the Stability
+          Pool.
         </>,
       ],
       currentApr: [
@@ -312,7 +320,8 @@ export default {
     ),
     subheading: (
       <>
-        Staking LQTY tokens, you earn a share of borrowing and redemption fees in the Liquity V1 protocol.
+        Staking LQTY tokens, you earn a share of borrowing and redemption fees
+        in the Liquity V1 protocol.
       </>
     ),
     learnMore: ["https://docs.liquity.org/faq/staking", "Learn more"],
@@ -350,32 +359,27 @@ export default {
       title: "Allocate your voting power",
       intro: (
         <>
-          Direct incentives from Liquity V2 protocol revenues towards liquidity providers for BOLD. Upvote from Thursday
-          to Tuesday. Downvote all week. <Link href="https://github.com/liquity/V2-gov">Learn more</Link>
+          Direct incentives from Nerite protocol revenues towards liquidity
+          providers for BOLD. Upvote from Thursday to Tuesday. Downvote all
+          week. <Link href='https://github.com/liquity/V2-gov'>Learn more</Link>
         </>
       ),
     },
     infoTooltips: {
       alsoClaimRewardsDeposit: [
-        <>
-          Rewards will be paid out as part of the update transaction.
-        </>,
+        <>Rewards will be paid out as part of the update transaction.</>,
       ],
     },
   },
 } as const;
 
-function Link({
-  href,
-  children,
-}: {
-  href: string;
-  children: N;
-}) {
-  const props = !href.startsWith("http") ? {} : {
-    target: "_blank",
-    rel: "noopener noreferrer",
-  };
+function Link({ href, children }: { href: string; children: N }) {
+  const props = !href.startsWith("http")
+    ? {}
+    : {
+        target: "_blank",
+        rel: "noopener noreferrer",
+      };
   return (
     <a href={href} {...props}>
       {children}
