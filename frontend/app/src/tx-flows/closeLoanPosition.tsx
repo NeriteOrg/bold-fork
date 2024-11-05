@@ -44,7 +44,7 @@ export type Request = v.InferOutput<typeof RequestSchema>;
 type Step = "closeLoanPosition" | "approveBold";
 
 const stepNames: Record<Step, string> = {
-  approveBold: "Approve BOLD",
+  approveBold: "Approve USDN",
   closeLoanPosition: "Close loan",
 };
 
@@ -86,8 +86,8 @@ export const closeLoanPosition: FlowDeclaration<Request, Step> = {
     }
 
     const amountToRepay = request.repayWithCollateral
-      ? (dn.div(loan.data.borrowed ?? dn.from(0), collPrice))
-      : (loan.data.borrowed ?? dn.from(0));
+      ? dn.div(loan.data.borrowed ?? dn.from(0), collPrice)
+      : loan.data.borrowed ?? dn.from(0);
 
     const collToReclaim = request.repayWithCollateral
       ? dn.sub(loan.data.deposit, amountToRepay)
@@ -96,30 +96,32 @@ export const closeLoanPosition: FlowDeclaration<Request, Step> = {
     return (
       <>
         <TransactionDetailsRow
-          label="You repay"
+          label='You repay'
           value={[
             <Amount
-              key="start"
+              key='start'
               value={amountToRepay}
-              suffix={` ${request.repayWithCollateral ? collateral.symbol : "BOLD"}`}
+              suffix={` ${
+                request.repayWithCollateral ? collateral.symbol : "USDN"
+              }`}
             />,
           ]}
         />
         <TransactionDetailsRow
-          label="You reclaim"
+          label='You reclaim'
           value={[
             <Amount
-              key="start"
+              key='start'
               value={collToReclaim}
               suffix={` ${collateral.symbol}`}
             />,
           ]}
         />
         <TransactionDetailsRow
-          label="Gas compensation refund"
+          label='Gas compensation refund'
           value={[
             <div
-              key="start"
+              key='start'
               title={`${fmtnum(ETH_GAS_COMPENSATION, "full")} ETH`}
             >
               {fmtnum(ETH_GAS_COMPENSATION, 4)} ETH
@@ -138,9 +140,10 @@ export const closeLoanPosition: FlowDeclaration<Request, Step> = {
     const { collIndex, prefixedTroveId } = request;
     const coll = contracts.collaterals[collIndex];
 
-    const Controller = coll.symbol === "ETH"
-      ? coll.contracts.WETHZapper
-      : coll.contracts.BorrowerOperations;
+    const Controller =
+      coll.symbol === "ETH"
+        ? coll.contracts.WETHZapper
+        : coll.contracts.BorrowerOperations;
 
     if (!account.address) {
       throw new Error("Account address is required");
@@ -154,17 +157,19 @@ export const closeLoanPosition: FlowDeclaration<Request, Step> = {
       args: [BigInt(troveId)],
     });
 
-    const isBoldApproved = request.repayWithCollateral || !dn.gt(debt, [
-      await readContract(wagmiConfig, {
-        ...contracts.BoldToken,
-        functionName: "allowance",
-        args: [account.address, Controller.address],
-      }) ?? 0n,
-      18,
-    ]);
+    const isBoldApproved =
+      request.repayWithCollateral ||
+      !dn.gt(debt, [
+        (await readContract(wagmiConfig, {
+          ...contracts.BoldToken,
+          functionName: "allowance",
+          args: [account.address, Controller.address],
+        })) ?? 0n,
+        18,
+      ]);
 
     return [
-      isBoldApproved ? null : "approveBold" as const,
+      isBoldApproved ? null : ("approveBold" as const),
       "closeLoanPosition" as const,
     ].filter((step) => step !== null);
   },
@@ -184,9 +189,10 @@ export const closeLoanPosition: FlowDeclaration<Request, Step> = {
         args: [BigInt(troveId)],
       });
 
-      const Controller = coll.symbol === "ETH"
-        ? coll.contracts.WETHZapper
-        : coll.contracts.BorrowerOperations;
+      const Controller =
+        coll.symbol === "ETH"
+          ? coll.contracts.WETHZapper
+          : coll.contracts.BorrowerOperations;
 
       return {
         ...contracts.BoldToken,

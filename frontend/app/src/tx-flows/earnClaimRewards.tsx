@@ -40,12 +40,14 @@ export const earnClaimRewards: FlowDeclaration<Request, Step> = {
   Summary({ flow }) {
     const collateral = getCollToken(flow.request.collIndex);
     const symbol = collateral?.symbol;
-    return symbol && (
-      <EarnPositionSummary
-        address={flow.request.depositor}
-        collSymbol={symbol}
-        txPreviewMode
-      />
+    return (
+      symbol && (
+        <EarnPositionSummary
+          address={flow.request.depositor}
+          collSymbol={symbol}
+          txPreviewMode
+        />
+      )
     );
   },
 
@@ -55,7 +57,7 @@ export const earnClaimRewards: FlowDeclaration<Request, Step> = {
     const rewardsBold = dn.from(0, 18);
     const rewardsColl = dn.from(0, 18);
 
-    const boldPrice = usePrice("BOLD");
+    const boldPrice = usePrice("USDN");
     const collPrice = usePrice(collateral?.symbol ?? null);
 
     const rewardsBoldUsd = boldPrice && dn.mul(rewardsBold, boldPrice);
@@ -64,33 +66,21 @@ export const earnClaimRewards: FlowDeclaration<Request, Step> = {
     return (
       <>
         <TransactionDetailsRow
-          label="Claiming BOLD rewards"
+          label='Claiming USDN rewards'
           value={[
-            <Amount
-              key="start"
-              value={rewardsBold}
-              suffix=" BOLD"
-            />,
-            <Amount
-              key="end"
-              value={rewardsBoldUsd}
-              prefix="$"
-            />,
+            <Amount key='start' value={rewardsBold} suffix=' USDN' />,
+            <Amount key='end' value={rewardsBoldUsd} prefix='$' />,
           ]}
         />
         <TransactionDetailsRow
           label={`Claiming ${collateral?.name} rewards`}
           value={[
             <Amount
-              key="start"
+              key='start'
               value={rewardsColl}
               suffix={` ${collateral?.symbol}`}
             />,
-            <Amount
-              key="end"
-              value={rewardsCollUsd}
-              prefix="$"
-            />,
+            <Amount key='end' value={rewardsCollUsd} prefix='$' />,
           ]}
         />
       </>

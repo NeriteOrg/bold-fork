@@ -7,7 +7,10 @@ import { ConnectWarningBox } from "@/src/comps/ConnectWarningBox/ConnectWarningB
 import { Field } from "@/src/comps/Field/Field";
 import { InterestRateField } from "@/src/comps/InterestRateField/InterestRateField";
 import { UpdateBox } from "@/src/comps/UpdateBox/UpdateBox";
-import { MAX_ANNUAL_INTEREST_RATE, MIN_ANNUAL_INTEREST_RATE } from "@/src/constants";
+import {
+  MAX_ANNUAL_INTEREST_RATE,
+  MIN_ANNUAL_INTEREST_RATE,
+} from "@/src/constants";
 import content from "@/src/content";
 import { dnum18 } from "@/src/dnum-utils";
 import { useInputFieldValue } from "@/src/form-utils";
@@ -25,11 +28,7 @@ import * as dn from "dnum";
 import { useState } from "react";
 import { maxUint256 } from "viem";
 
-export function PanelUpdateRate({
-  loan,
-}: {
-  loan: PositionLoan;
-}) {
+export function PanelUpdateRate({ loan }: { loan: PositionLoan }) {
   const account = useAccount();
   const txFlow = useTransactionFlow();
 
@@ -41,23 +40,30 @@ export function PanelUpdateRate({
 
   const collPrice = usePrice(collToken.symbol);
 
-  const deposit = useInputFieldValue((value) => `${dn.format(value)} ${collToken.symbol}`, {
-    defaultValue: dn.toString(loan.deposit),
-  });
-  const debt = useInputFieldValue((value) => `${dn.format(value)} BOLD`, {
+  const deposit = useInputFieldValue(
+    (value) => `${dn.format(value)} ${collToken.symbol}`,
+    {
+      defaultValue: dn.toString(loan.deposit),
+    }
+  );
+  const debt = useInputFieldValue((value) => `${dn.format(value)} USDN`, {
     defaultValue: dn.toString(loan.borrowed),
   });
 
   const [interestRate, setInterestRate] = useState(loan.interestRate);
-  const [interestRateMode, setInterestRateMode] = useState<DelegateMode>(loan.batchManager ? "delegate" : "manual");
-  const [interestRateDelegate, setInterestRateDelegate] = useState(loan.batchManager);
+  const [interestRateMode, setInterestRateMode] = useState<DelegateMode>(
+    loan.batchManager ? "delegate" : "manual"
+  );
+  const [interestRateDelegate, setInterestRateDelegate] = useState(
+    loan.batchManager
+  );
 
   const loanDetails = getLoanDetails(
     loan.deposit,
     loan.borrowed,
     loan.interestRate,
     collToken.collateralRatio,
-    collPrice,
+    collPrice
   );
 
   const newLoanDetails = getLoanDetails(
@@ -65,24 +71,25 @@ export function PanelUpdateRate({
     debt.isEmpty ? null : debt.parsed,
     interestRate,
     collToken.collateralRatio,
-    collPrice,
+    collPrice
   );
 
-  const boldInterestPerYear = interestRate
-    && debt.parsed
-    && dn.mul(debt.parsed, interestRate);
+  const boldInterestPerYear =
+    interestRate && debt.parsed && dn.mul(debt.parsed, interestRate);
 
-  const boldInterestPerYearPrev = loan.interestRate
-    && loan.borrowed
-    && dn.mul(loan.borrowed, loan.interestRate);
+  const boldInterestPerYearPrev =
+    loan.interestRate &&
+    loan.borrowed &&
+    dn.mul(loan.borrowed, loan.interestRate);
 
-  const allowSubmit = account.isConnected
-    && deposit.parsed
-    && dn.gt(deposit.parsed, 0)
-    && debt.parsed
-    && dn.gt(debt.parsed, 0)
-    && interestRate
-    && dn.gt(interestRate, 0);
+  const allowSubmit =
+    account.isConnected &&
+    deposit.parsed &&
+    dn.gt(deposit.parsed, 0) &&
+    debt.parsed &&
+    dn.gt(debt.parsed, 0) &&
+    interestRate &&
+    dn.gt(interestRate, 0);
 
   return (
     <>
@@ -104,20 +111,14 @@ export function PanelUpdateRate({
           end: (
             <Field.FooterInfo
               label={
-                <HFlex alignItems="center" gap={8}>
-                  <Amount
-                    value={loanDetails.interestRate}
-                    percentage
-                  />
+                <HFlex alignItems='center' gap={8}>
+                  <Amount value={loanDetails.interestRate} percentage />
                   <div>{ARROW_RIGHT}</div>
                 </HFlex>
               }
               value={
-                <HFlex alignItems="center" gap={8}>
-                  <Amount
-                    value={newLoanDetails.interestRate}
-                    percentage
-                  />
+                <HFlex alignItems='center' gap={8}>
+                  <Amount value={newLoanDetails.interestRate} percentage />
                 </HFlex>
               }
             />
@@ -136,13 +137,17 @@ export function PanelUpdateRate({
               label: "Redemption risk",
               before: loanDetails.redemptionRisk && (
                 <>
-                  <StatusDot mode={riskLevelToStatusMode(loanDetails.redemptionRisk)} />
+                  <StatusDot
+                    mode={riskLevelToStatusMode(loanDetails.redemptionRisk)}
+                  />
                   {formatRisk(loanDetails.redemptionRisk)}
                 </>
               ),
               after: newLoanDetails.redemptionRisk && (
                 <>
-                  <StatusDot mode={riskLevelToStatusMode(newLoanDetails.redemptionRisk)} />
+                  <StatusDot
+                    mode={riskLevelToStatusMode(newLoanDetails.redemptionRisk)}
+                  />
                   {formatRisk(newLoanDetails.redemptionRisk)}
                 </>
               ),
@@ -150,12 +155,16 @@ export function PanelUpdateRate({
             {
               label: (
                 <>
-                  <div>BOLD interest per year</div>
-                  <InfoTooltip {...infoTooltipProps(content.generalInfotooltips.interestRateBoldPerYear)} />
+                  <div>USDN interest per year</div>
+                  <InfoTooltip
+                    {...infoTooltipProps(
+                      content.generalInfotooltips.interestRateBoldPerYear
+                    )}
+                  />
                 </>
               ),
-              before: <Amount value={boldInterestPerYearPrev} suffix="BOLD" />,
-              after: <Amount value={boldInterestPerYear} suffix="BOLD" />,
+              before: <Amount value={boldInterestPerYearPrev} suffix='USDN' />,
+              after: <Amount value={boldInterestPerYear} suffix='USDN' />,
             },
           ]}
         />
@@ -173,9 +182,9 @@ export function PanelUpdateRate({
         <ConnectWarningBox />
         <Button
           disabled={!allowSubmit}
-          label="Update position"
-          mode="primary"
-          size="large"
+          label='Update position'
+          mode='primary'
+          size='large'
           wide
           onClick={() => {
             if (account.address) {
@@ -186,20 +195,27 @@ export function PanelUpdateRate({
                   "Back to editing",
                 ],
                 successLink: ["/", "Go to the dashboard"],
-                successMessage: "The position interest rate has been updated successfully.",
+                successMessage:
+                  "The position interest rate has been updated successfully.",
 
                 collIndex: loan.collIndex,
                 owner: account.address,
-                prefixedTroveId: getPrefixedTroveId(loan.collIndex, loan.troveId),
+                prefixedTroveId: getPrefixedTroveId(
+                  loan.collIndex,
+                  loan.troveId
+                ),
                 upperHint: dnum18(0),
                 lowerHint: dnum18(0),
                 annualInterestRate: interestRate,
                 maxUpfrontFee: dnum18(maxUint256),
-                interestRateDelegate: interestRateMode === "manual" || !interestRateDelegate ? null : [
-                  interestRateDelegate,
-                  MIN_ANNUAL_INTEREST_RATE,
-                  MAX_ANNUAL_INTEREST_RATE,
-                ],
+                interestRateDelegate:
+                  interestRateMode === "manual" || !interestRateDelegate
+                    ? null
+                    : [
+                        interestRateDelegate,
+                        MIN_ANNUAL_INTEREST_RATE,
+                        MAX_ANNUAL_INTEREST_RATE,
+                      ],
               });
             }
           }}

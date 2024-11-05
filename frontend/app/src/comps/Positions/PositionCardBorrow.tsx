@@ -2,12 +2,22 @@ import type { PositionLoan } from "@/src/types";
 
 import { formatLiquidationRisk } from "@/src/formatting";
 import { fmtnum } from "@/src/formatting";
-import { getLiquidationRisk, getLtv, getRedemptionRisk } from "@/src/liquity-math";
+import {
+  getLiquidationRisk,
+  getLtv,
+  getRedemptionRisk,
+} from "@/src/liquity-math";
 import { shortenTroveId, getCollToken } from "@/src/liquity-utils";
 import { usePrice } from "@/src/services/Prices";
 import { riskLevelToStatusMode } from "@/src/uikit-utils";
 import { css } from "@/styled-system/css";
-import { HFlex, IconBorrow, StatusDot, StrongCard, TokenIcon } from "@liquity2/uikit";
+import {
+  HFlex,
+  IconBorrow,
+  StatusDot,
+  StrongCard,
+  TokenIcon,
+} from "@liquity2/uikit";
 import * as dn from "dnum";
 import Link from "next/link";
 import { CardRow, CardRows, EditSquare } from "./shared";
@@ -31,7 +41,8 @@ export function PositionCardBorrow({
   const token = getCollToken(collIndex);
   const collateralPriceUsd = usePrice(token?.symbol ?? null);
 
-  const ltv = collateralPriceUsd && getLtv(deposit, borrowed, collateralPriceUsd);
+  const ltv =
+    collateralPriceUsd && getLtv(deposit, borrowed, collateralPriceUsd);
   const redemptionRisk = getRedemptionRisk(interestRate);
 
   const maxLtv = token && dn.from(1 / token.collateralRatio, 18);
@@ -39,19 +50,15 @@ export function PositionCardBorrow({
 
   const title = token
     ? [
-      `Loan ID: ${shortenTroveId(troveId)}…`,
-      `Borrowed: ${fmtnum(borrowed, "full")} BOLD`,
-      `Collateral: ${fmtnum(deposit, "full")} ${token.name}`,
-      `Interest rate: ${fmtnum(interestRate, "full", 100)}%`,
-    ]
+        `Loan ID: ${shortenTroveId(troveId)}…`,
+        `Borrowed: ${fmtnum(borrowed, "full")} USDN`,
+        `Collateral: ${fmtnum(deposit, "full")} ${token.name}`,
+        `Interest rate: ${fmtnum(interestRate, "full", 100)}%`,
+      ]
     : [];
 
   return (
-    <Link
-      href={`/loan?id=${collIndex}:${troveId}`}
-      legacyBehavior
-      passHref
-    >
+    <Link href={`/loan?id=${collIndex}:${troveId}`} legacyBehavior passHref>
       <StrongCard
         title={title.join("\n")}
         heading={
@@ -71,18 +78,15 @@ export function PositionCardBorrow({
             >
               <IconBorrow size={16} />
             </div>
-            BOLD loan
+            USDN loan
           </div>
         }
         contextual={<EditSquare />}
         main={{
           value: (
-            <HFlex gap={8} alignItems="center" justifyContent="flex-start">
+            <HFlex gap={8} alignItems='center' justifyContent='flex-start'>
               {fmtnum(borrowed)}
-              <TokenIcon
-                size={24}
-                symbol="BOLD"
-              />
+              <TokenIcon size={24} symbol='USDN' />
             </HFlex>
           ),
           // label: "Total debt",
@@ -95,7 +99,7 @@ export function PositionCardBorrow({
               })}
             >
               Backed by {deposit ? dn.format(deposit, 2) : "−"} {token.name}
-              <TokenIcon size="small" symbol={token.symbol} />
+              <TokenIcon size='small' symbol={token.symbol} />
             </div>
           ),
         }}
@@ -125,11 +129,12 @@ export function PositionCardBorrow({
                         "--status-negative": "token(colors.negative)",
                       })}
                       style={{
-                        color: liquidationRisk === "low"
-                          ? "var(--status-positive)"
-                          : liquidationRisk === "medium"
-                          ? "var(--status-warning)"
-                          : "var(--status-negative)",
+                        color:
+                          liquidationRisk === "low"
+                            ? "var(--status-positive)"
+                            : liquidationRisk === "medium"
+                            ? "var(--status-warning)"
+                            : "var(--status-negative)",
                       }}
                     >
                       {dn.format(dn.mul(ltv, 100), 2)}%
@@ -222,7 +227,12 @@ export function PositionCardBorrow({
                       color: "strongSurfaceContent",
                     })}
                   >
-                    {redemptionRisk === "low" ? "Low" : redemptionRisk === "medium" ? "Medium" : "High"} redemption risk
+                    {redemptionRisk === "low"
+                      ? "Low"
+                      : redemptionRisk === "medium"
+                      ? "Medium"
+                      : "High"}{" "}
+                    redemption risk
                   </div>
                   <StatusDot
                     mode={riskLevelToStatusMode(redemptionRisk)}

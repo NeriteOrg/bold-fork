@@ -4,9 +4,20 @@ import type { ReactNode } from "react";
 import { Amount } from "@/src/comps/Amount/Amount";
 import { TagPreview } from "@/src/comps/TagPreview/TagPreview";
 import { fmtnum } from "@/src/formatting";
-import { getCollToken, useCollIndexFromSymbol, useEarnPool, useEarnPosition } from "@/src/liquity-utils";
+import {
+  getCollToken,
+  useCollIndexFromSymbol,
+  useEarnPool,
+  useEarnPosition,
+} from "@/src/liquity-utils";
 import { css } from "@/styled-system/css";
-import { HFlex, IconArrowRight, IconPlus, InfoTooltip, TokenIcon } from "@liquity2/uikit";
+import {
+  HFlex,
+  IconArrowRight,
+  IconPlus,
+  InfoTooltip,
+  TokenIcon,
+} from "@liquity2/uikit";
 import * as dn from "dnum";
 import Link from "next/link";
 
@@ -29,158 +40,164 @@ export function EarnPositionSummary({
   const earnPosition = useEarnPosition(collIndex, address ?? null);
   const earnPool = useEarnPool(collIndex ?? 0);
 
-  const share = (
-      earnPosition.data
-      && earnPool.data.totalDeposited
-      && dn.gt(earnPool.data.totalDeposited, 0)
-    )
-    ? dn.div(earnPosition.data.deposit, earnPool.data.totalDeposited)
-    : dn.from(0, 18);
+  const share =
+    earnPosition.data &&
+    earnPool.data.totalDeposited &&
+    dn.gt(earnPool.data.totalDeposited, 0)
+      ? dn.div(earnPosition.data.deposit, earnPool.data.totalDeposited)
+      : dn.from(0, 18);
 
-  const active = Boolean(earnPosition.data?.deposit && dn.gt(earnPosition.data.deposit, 0));
+  const active = Boolean(
+    earnPosition.data?.deposit && dn.gt(earnPosition.data.deposit, 0)
+  );
 
-  return collateral && (
-    <div
-      className={css({
-        display: "flex",
-        flexDirection: "column",
-        padding: "12px 16px",
-        borderRadius: 8,
-        borderWidth: 1,
-        borderStyle: "solid",
-
-        "--fg-primary-active": "token(colors.strongSurfaceContent)",
-        "--fg-primary-inactive": "token(colors.content)",
-
-        "--fg-secondary-active": "token(colors.strongSurfaceContentAlt)",
-        "--fg-secondary-inactive": "token(colors.contentAlt)",
-
-        "--border-active": "color-mix(in srgb, token(colors.secondary) 15%, transparent)",
-        "--border-inactive": "token(colors.infoSurfaceBorder)",
-
-        "--bg-active": "token(colors.strongSurface)",
-        "--bg-inactive": "token(colors.infoSurface)",
-      })}
-      style={{
-        color: `var(--fg-primary-${active ? "active" : "inactive"})`,
-        background: `var(--bg-${active ? "active" : "inactive"})`,
-        borderColor: active ? "transparent" : "var(--border-inactive)",
-      }}
-    >
+  return (
+    collateral && (
       <div
         className={css({
           display: "flex",
-          alignItems: "center",
-          gap: 16,
-          paddingBottom: 12,
+          flexDirection: "column",
+          padding: "12px 16px",
+          borderRadius: 8,
+          borderWidth: 1,
+          borderStyle: "solid",
+
+          "--fg-primary-active": "token(colors.strongSurfaceContent)",
+          "--fg-primary-inactive": "token(colors.content)",
+
+          "--fg-secondary-active": "token(colors.strongSurfaceContentAlt)",
+          "--fg-secondary-inactive": "token(colors.contentAlt)",
+
+          "--border-active":
+            "color-mix(in srgb, token(colors.secondary) 15%, transparent)",
+          "--border-inactive": "token(colors.infoSurfaceBorder)",
+
+          "--bg-active": "token(colors.strongSurface)",
+          "--bg-inactive": "token(colors.infoSurface)",
         })}
         style={{
-          borderBottom: `1px solid var(--border-${active ? "active" : "inactive"})`,
+          color: `var(--fg-primary-${active ? "active" : "inactive"})`,
+          background: `var(--bg-${active ? "active" : "inactive"})`,
+          borderColor: active ? "transparent" : "var(--border-inactive)",
         }}
       >
         <div
           className={css({
-            flexGrow: 0,
-            flexShrink: 0,
             display: "flex",
+            alignItems: "center",
+            gap: 16,
+            paddingBottom: 12,
           })}
-        >
-          <TokenIcon
-            symbol={collateral.symbol}
-            size={34}
-          />
-        </div>
-        <div
-          className={css({
-            flexGrow: 1,
-            display: "flex",
-            justifyContent: "space-between",
-          })}
+          style={{
+            borderBottom: `1px solid var(--border-${
+              active ? "active" : "inactive"
+            })`,
+          }}
         >
           <div
             className={css({
+              flexGrow: 0,
+              flexShrink: 0,
               display: "flex",
-              flexDirection: "column",
             })}
           >
-            <div>
-              {title ?? `${collateral.name} Stability Pool`}
+            <TokenIcon symbol={collateral.symbol} size={34} />
+          </div>
+          <div
+            className={css({
+              flexGrow: 1,
+              display: "flex",
+              justifyContent: "space-between",
+            })}
+          >
+            <div
+              className={css({
+                display: "flex",
+                flexDirection: "column",
+              })}
+            >
+              <div>{title ?? `${collateral.name} Stability Pool`}</div>
+              <div
+                className={css({
+                  display: "flex",
+                  gap: 4,
+                  fontSize: 14,
+                })}
+                style={{
+                  color: `var(--fg-secondary-${
+                    active ? "active" : "inactive"
+                  })`,
+                }}
+              >
+                <div>TVL</div>
+                <div>
+                  <Amount
+                    fallback='-'
+                    format='compact'
+                    prefix='$'
+                    value={earnPool.data?.totalDeposited}
+                  />
+                </div>
+                <InfoTooltip heading='Total Value Locked (TVL)'>
+                  Total amount of USDN deposited in this stability pool.
+                </InfoTooltip>
+              </div>
             </div>
             <div
               className={css({
                 display: "flex",
-                gap: 4,
-                fontSize: 14,
+                flexDirection: "column",
+                alignItems: "flex-end",
               })}
-              style={{
-                color: `var(--fg-secondary-${active ? "active" : "inactive"})`,
-              }}
             >
-              <div>TVL</div>
-              <div>
-                <Amount
-                  fallback="-"
-                  format="compact"
-                  prefix="$"
-                  value={earnPool.data?.totalDeposited}
-                />
-              </div>
-              <InfoTooltip heading="Total Value Locked (TVL)">
-                Total amount of BOLD deposited in this stability pool.
-              </InfoTooltip>
+              {txPreviewMode ? (
+                <TagPreview />
+              ) : (
+                <>
+                  <div>
+                    <Amount
+                      fallback='-%'
+                      format='1z'
+                      percentage
+                      value={earnPool.data?.apr}
+                    />
+                  </div>
+                  <div
+                    className={css({
+                      display: "flex",
+                      gap: 4,
+                      fontSize: 14,
+                    })}
+                    style={{
+                      color: `var(--fg-secondary-${
+                        active ? "active" : "inactive"
+                      })`,
+                    }}
+                  >
+                    <div>Current APR</div>
+                    <InfoTooltip heading='Annual Percentage Rate (APR)'>
+                      The annualized rate this stability pool’s deposits earned
+                      over the past 7 days.
+                    </InfoTooltip>
+                  </div>
+                </>
+              )}
             </div>
           </div>
-          <div
-            className={css({
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-end",
-            })}
-          >
-            {txPreviewMode ? <TagPreview /> : (
-              <>
-                <div>
-                  <Amount
-                    fallback="-%"
-                    format="1z"
-                    percentage
-                    value={earnPool.data?.apr}
-                  />
-                </div>
-                <div
-                  className={css({
-                    display: "flex",
-                    gap: 4,
-                    fontSize: 14,
-                  })}
-                  style={{
-                    color: `var(--fg-secondary-${active ? "active" : "inactive"})`,
-                  }}
-                >
-                  <div>Current APR</div>
-                  <InfoTooltip heading="Annual Percentage Rate (APR)">
-                    The annualized rate this stability pool’s deposits earned over the past 7 days.
-                  </InfoTooltip>
-                </div>
-              </>
-            )}
-          </div>
         </div>
-      </div>
-      <div
-        className={css({
-          position: "relative",
-          display: "flex",
-          gap: 32,
-          alignItems: "center",
-          justifyContent: "space-between",
-          paddingTop: 12,
-          height: 56,
-          fontSize: 14,
-        })}
-      >
-        {earnPosition.isLoading
-          ? (
+        <div
+          className={css({
+            position: "relative",
+            display: "flex",
+            gap: 32,
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingTop: 12,
+            height: 56,
+            fontSize: 14,
+          })}
+        >
+          {earnPosition.isLoading ? (
             <div
               className={css({
                 color: "var(--fg-secondary-inactive)",
@@ -188,8 +205,7 @@ export function EarnPositionSummary({
             >
               Fetching position…
             </div>
-          )
-          : (
+          ) : (
             <div
               className={css({
                 display: "flex",
@@ -199,7 +215,9 @@ export function EarnPositionSummary({
               <div>
                 <div
                   style={{
-                    color: `var(--fg-secondary-${active ? "active" : "inactive"})`,
+                    color: `var(--fg-secondary-${
+                      active ? "active" : "inactive"
+                    })`,
                   }}
                 >
                   Deposit
@@ -214,7 +232,7 @@ export function EarnPositionSummary({
                   })}
                 >
                   {active && <Amount value={earnPosition.data?.deposit} />}
-                  <TokenIcon symbol="BOLD" size="mini" />
+                  <TokenIcon symbol='USDN' size='mini' />
                 </div>
               </div>
               <div
@@ -226,7 +244,9 @@ export function EarnPositionSummary({
               >
                 <div
                   style={{
-                    color: `var(--fg-secondary-${active ? "active" : "inactive"})`,
+                    color: `var(--fg-secondary-${
+                      active ? "active" : "inactive"
+                    })`,
                   }}
                 >
                   Rewards
@@ -240,38 +260,41 @@ export function EarnPositionSummary({
                     height: 24,
                   })}
                 >
-                  {active
-                    ? (
-                      <>
-                        <HFlex
-                          gap={4}
-                          title={`${fmtnum(earnPosition.data?.rewards.bold, "full")} BOLD`}
-                          className={css({
-                            fontVariantNumeric: "tabular-nums",
-                          })}
-                        >
-                          {fmtnum(earnPosition.data?.rewards.bold)}
-                          <TokenIcon symbol="BOLD" size="mini" title={null} />
-                        </HFlex>
-                        <HFlex gap={4}>
-                          <Amount value={earnPosition.data?.rewards.coll} />
-                          <TokenIcon symbol={collateral.symbol} size="mini" />
-                        </HFlex>
-                      </>
-                    )
-                    : (
-                      <TokenIcon.Group size="mini">
-                        <TokenIcon symbol="BOLD" />
-                        <TokenIcon symbol={collateral.symbol} />
-                      </TokenIcon.Group>
-                    )}
+                  {active ? (
+                    <>
+                      <HFlex
+                        gap={4}
+                        title={`${fmtnum(
+                          earnPosition.data?.rewards.bold,
+                          "full"
+                        )} USDN`}
+                        className={css({
+                          fontVariantNumeric: "tabular-nums",
+                        })}
+                      >
+                        {fmtnum(earnPosition.data?.rewards.bold)}
+                        <TokenIcon symbol='USDN' size='mini' title={null} />
+                      </HFlex>
+                      <HFlex gap={4}>
+                        <Amount value={earnPosition.data?.rewards.coll} />
+                        <TokenIcon symbol={collateral.symbol} size='mini' />
+                      </HFlex>
+                    </>
+                  ) : (
+                    <TokenIcon.Group size='mini'>
+                      <TokenIcon symbol='USDN' />
+                      <TokenIcon symbol={collateral.symbol} />
+                    </TokenIcon.Group>
+                  )}
                 </div>
               </div>
               {active && (
                 <div>
                   <div
                     style={{
-                      color: `var(--fg-secondary-${active ? "active" : "inactive"})`,
+                      color: `var(--fg-secondary-${
+                        active ? "active" : "inactive"
+                      })`,
                     }}
                   >
                     Pool share
@@ -284,15 +307,18 @@ export function EarnPositionSummary({
             </div>
           )}
 
-        {linkToScreen && (
-          <OpenLink
-            active={active}
-            path={`/earn/${collateral?.symbol.toLowerCase()}`}
-            title={`${active ? "Manage" : "Deposit to"} ${collateral.name} pool`}
-          />
-        )}
+          {linkToScreen && (
+            <OpenLink
+              active={active}
+              path={`/earn/${collateral?.symbol.toLowerCase()}`}
+              title={`${active ? "Manage" : "Deposit to"} ${
+                collateral.name
+              } pool`}
+            />
+          )}
+        </div>
       </div>
-    </div>
+    )
   );
 }
 

@@ -14,7 +14,16 @@ import { useAccount, useBalance } from "@/src/services/Ethereum";
 import { useTransactionFlow } from "@/src/services/TransactionFlow";
 import { infoTooltipProps } from "@/src/uikit-utils";
 import { css } from "@/styled-system/css";
-import { Button, Checkbox, HFlex, InfoTooltip, InputField, Tabs, TextButton, TokenIcon } from "@liquity2/uikit";
+import {
+  Button,
+  Checkbox,
+  HFlex,
+  InfoTooltip,
+  InputField,
+  Tabs,
+  TextButton,
+  TokenIcon,
+} from "@liquity2/uikit";
 import * as dn from "dnum";
 import { useState } from "react";
 
@@ -41,28 +50,34 @@ export function PanelUpdateDeposit({
 
   const parsedValue = parseInputFloat(value);
 
-  const value_ = (focused || !parsedValue || dn.lte(parsedValue, 0)) ? value : `${fmtnum(parsedValue, "full")}`;
+  const value_ =
+    focused || !parsedValue || dn.lte(parsedValue, 0)
+      ? value
+      : `${fmtnum(parsedValue, "full")}`;
 
-  const depositDifference = mode === "remove" ? dn.mul(parsedValue ?? DNUM_0, -1) : (parsedValue ?? DNUM_0);
+  const depositDifference =
+    mode === "remove"
+      ? dn.mul(parsedValue ?? DNUM_0, -1)
+      : parsedValue ?? DNUM_0;
 
   const updatedDeposit = dnumMax(
     dn.add(position?.deposit ?? DNUM_0, depositDifference),
-    DNUM_0,
+    DNUM_0
   );
 
-  const boldBalance = useBalance(account.address, "BOLD");
+  const boldBalance = useBalance(account.address, "USDN");
 
   const updatedBoldQty = dn.add(deposited, depositDifference);
 
-  const updatedPoolShare = depositDifference && dn.gt(updatedBoldQty, 0)
-    ? dn.div(updatedDeposit, updatedBoldQty)
-    : DNUM_0;
+  const updatedPoolShare =
+    depositDifference && dn.gt(updatedBoldQty, 0)
+      ? dn.div(updatedDeposit, updatedBoldQty)
+      : DNUM_0;
 
   const collateral = getCollToken(collIndex);
 
-  const allowSubmit = account.isConnected
-    && parsedValue
-    && dn.gt(parsedValue, 0);
+  const allowSubmit =
+    account.isConnected && parsedValue && dn.gt(parsedValue, 0);
 
   return (
     <div
@@ -80,20 +95,29 @@ export function PanelUpdateDeposit({
             contextual={
               <InputTokenBadge
                 background={false}
-                icon={<TokenIcon symbol="BOLD" />}
-                label="BOLD"
+                icon={<TokenIcon symbol='USDN' />}
+                label='USDN'
               />
             }
             label={{
-              start: mode === "remove"
-                ? content.earnScreen.withdrawPanel.label
-                : content.earnScreen.depositPanel.label,
+              start:
+                mode === "remove"
+                  ? content.earnScreen.withdrawPanel.label
+                  : content.earnScreen.depositPanel.label,
               end: (
                 <Tabs
                   compact
                   items={[
-                    { label: "Deposit", panelId: "panel-deposit", tabId: "tab-deposit" },
-                    { label: "Withdraw", panelId: "panel-withdraw", tabId: "tab-withdraw" },
+                    {
+                      label: "Deposit",
+                      panelId: "panel-deposit",
+                      tabId: "tab-deposit",
+                    },
+                    {
+                      label: "Withdraw",
+                      panelId: "panel-withdraw",
+                      tabId: "tab-withdraw",
+                    },
                   ]}
                   onSelect={(index, { origin, event }) => {
                     setMode(index === 1 ? "remove" : "add");
@@ -112,37 +136,39 @@ export function PanelUpdateDeposit({
             onChange={setValue}
             onBlur={() => setFocused(false)}
             value={value_}
-            placeholder="0.00"
+            placeholder='0.00'
             secondary={{
               start: (
                 <HFlex gap={4}>
                   <div>{content.earnScreen.depositPanel.shareLabel}</div>
                   <div>
-                    <Amount
-                      format={2}
-                      percentage
-                      value={updatedPoolShare}
-                    />
+                    <Amount format={2} percentage value={updatedPoolShare} />
                   </div>
-                  <InfoTooltip {...infoTooltipProps(content.earnScreen.infoTooltips.depositPoolShare)} />
+                  <InfoTooltip
+                    {...infoTooltipProps(
+                      content.earnScreen.infoTooltips.depositPoolShare
+                    )}
+                  />
                 </HFlex>
               ),
-              end: mode === "add"
-                ? (boldBalance.data && (
-                  <TextButton
-                    label={`Max ${fmtnum(boldBalance.data, 2)} BOLD`}
-                    onClick={() => setValue(dn.toString(boldBalance.data))}
-                  />
-                ))
-                : (position?.deposit && dn.gt(position.deposit, 0) && (
-                  <TextButton
-                    label={`Max ${fmtnum(position.deposit, 2)} BOLD`}
-                    onClick={() => {
-                      setValue(dn.toString(position.deposit));
-                      setClaimRewards(true);
-                    }}
-                  />
-                )),
+              end:
+                mode === "add"
+                  ? boldBalance.data && (
+                      <TextButton
+                        label={`Max ${fmtnum(boldBalance.data, 2)} USDN`}
+                        onClick={() => setValue(dn.toString(boldBalance.data))}
+                      />
+                    )
+                  : position?.deposit &&
+                    dn.gt(position.deposit, 0) && (
+                      <TextButton
+                        label={`Max ${fmtnum(position.deposit, 2)} USDN`}
+                        onClick={() => {
+                          setValue(dn.toString(position.deposit));
+                          setClaimRewards(true);
+                        }}
+                      />
+                    ),
             }}
           />
         }
@@ -158,7 +184,7 @@ export function PanelUpdateDeposit({
         }}
       >
         {hasDeposit && (
-          <HFlex justifyContent="space-between">
+          <HFlex justifyContent='space-between'>
             <div
               className={css({
                 display: "flex",
@@ -175,17 +201,14 @@ export function PanelUpdateDeposit({
                   userSelect: "none",
                 })}
               >
-                <Checkbox
-                  checked={claimRewards}
-                  onChange={setClaimRewards}
-                />
+                <Checkbox checked={claimRewards} onChange={setClaimRewards} />
                 {content.earnScreen.depositPanel.claimCheckbox}
               </label>
               <InfoTooltip
                 {...infoTooltipProps(
                   mode === "remove"
                     ? content.earnScreen.infoTooltips.alsoClaimRewardsWithdraw
-                    : content.earnScreen.infoTooltips.alsoClaimRewardsDeposit,
+                    : content.earnScreen.infoTooltips.alsoClaimRewardsDeposit
                 )}
               />
             </div>
@@ -203,7 +226,7 @@ export function PanelUpdateDeposit({
                       color: "contentAlt",
                     })}
                   >
-                    BOLD
+                    USDN
                   </span>
                 </div>
                 {collateral && (
@@ -226,8 +249,8 @@ export function PanelUpdateDeposit({
         <Button
           disabled={!allowSubmit}
           label={content.earnScreen.depositPanel.action}
-          mode="primary"
-          size="large"
+          mode='primary'
+          size='large'
           wide
           onClick={() => {
             if (collateral && account.address && collIndex !== null) {
@@ -238,9 +261,10 @@ export function PanelUpdateDeposit({
                   "Back to editing",
                 ],
                 successLink: ["/", "Go to the Dashboard"],
-                successMessage: mode === "remove"
-                  ? "The withdrawal has been processed successfully."
-                  : "The deposit has been processed successfully.",
+                successMessage:
+                  mode === "remove"
+                    ? "The withdrawal has been processed successfully."
+                    : "The deposit has been processed successfully.",
 
                 depositor: account.address,
                 boldAmount: dn.abs(depositDifference),

@@ -26,7 +26,7 @@ export function PanelClaimRewards({
 
   const collateral = getCollToken(collIndex);
   const collPriceUsd = usePrice(collateral?.symbol ?? null);
-  const boldPriceUsd = usePrice("BOLD");
+  const boldPriceUsd = usePrice("USDN");
 
   if (!collPriceUsd || !boldPriceUsd || !collateral) {
     return null;
@@ -34,7 +34,7 @@ export function PanelClaimRewards({
 
   const totalRewards = dn.add(
     dn.mul(position?.rewards?.bold ?? DNUM_0, boldPriceUsd),
-    dn.mul(position?.rewards?.coll ?? DNUM_0, collPriceUsd),
+    dn.mul(position?.rewards?.coll ?? DNUM_0, collPriceUsd)
   );
 
   const gasFeeUsd = dn.multiply(dn.from(0.0015, 18), collPriceUsd);
@@ -47,7 +47,7 @@ export function PanelClaimRewards({
         <Rewards
           amount={position?.rewards?.bold ?? DNUM_0}
           label={content.earnScreen.rewardsPanel.boldRewardsLabel}
-          symbol="BOLD"
+          symbol='USDN'
         />
         <Rewards
           amount={position?.rewards?.coll ?? DNUM_0}
@@ -64,21 +64,13 @@ export function PanelClaimRewards({
             color: "contentAlt",
           })}
         >
-          <HFlex justifyContent="space-between" gap={24}>
+          <HFlex justifyContent='space-between' gap={24}>
             <div>{content.earnScreen.rewardsPanel.totalUsdLabel}</div>
-            <Amount
-              prefix="$"
-              value={totalRewards}
-              format={2}
-            />
+            <Amount prefix='$' value={totalRewards} format={2} />
           </HFlex>
-          <HFlex justifyContent="space-between" gap={24}>
+          <HFlex justifyContent='space-between' gap={24}>
             <div>{content.earnScreen.rewardsPanel.expectedGasFeeLabel}</div>
-            <Amount
-              prefix="~$"
-              value={gasFeeUsd}
-              format={2}
-            />
+            <Amount prefix='~$' value={gasFeeUsd} format={2} />
           </HFlex>
         </div>
       </VFlex>
@@ -88,8 +80,8 @@ export function PanelClaimRewards({
       <Button
         disabled={!allowSubmit}
         label={content.earnScreen.rewardsPanel.action}
-        mode="primary"
-        size="large"
+        mode='primary'
+        size='large'
         wide
         onClick={() => {
           if (collateral && account.address && collIndex !== null) {

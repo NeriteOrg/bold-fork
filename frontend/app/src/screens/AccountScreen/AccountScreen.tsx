@@ -6,20 +6,27 @@ import type { ReactNode } from "react";
 import { ERC20Faucet } from "@/src/abi/ERC20Faucet";
 import { Positions } from "@/src/comps/Positions/Positions";
 import { Screen } from "@/src/comps/Screen/Screen";
-import { getCollateralContract, getContracts, getProtocolContract } from "@/src/contracts";
+import {
+  getCollateralContract,
+  getContracts,
+  getProtocolContract,
+} from "@/src/contracts";
 import { fmtnum } from "@/src/formatting";
 import { useBalance } from "@/src/services/Ethereum";
 import { css } from "@/styled-system/css";
-import { Button, IconAccount, isCollateralSymbol, shortenAddress, TokenIcon, VFlex } from "@liquity2/uikit";
+import {
+  Button,
+  IconAccount,
+  isCollateralSymbol,
+  shortenAddress,
+  TokenIcon,
+  VFlex,
+} from "@liquity2/uikit";
 import { blo } from "blo";
 import Image from "next/image";
 import { useWriteContract } from "wagmi";
 
-export function AccountScreen({
-  address,
-}: {
-  address: Address;
-}) {
+export function AccountScreen({ address }: { address: Address }) {
   const collSymbols = getContracts().collaterals.map((coll) => coll.symbol);
   return (
     <Screen>
@@ -73,7 +80,7 @@ export function AccountScreen({
           >
             {shortenAddress(address, 3)}
             <Image
-              alt=""
+              alt=''
               width={32}
               height={32}
               src={blo(address)}
@@ -94,24 +101,14 @@ export function AccountScreen({
               gridTemplateColumns: `repeat(3, 1fr)`,
             }}
           >
-            <GridItem label="BOLD balance">
-              <Balance
-                address={address}
-                tokenSymbol="BOLD"
-              />
+            <GridItem label='USDN balance'>
+              <Balance address={address} tokenSymbol='USDN' />
             </GridItem>
-            <GridItem label="LQTY balance">
-              <Balance
-                address={address}
-                tokenSymbol="LQTY"
-                tapButton
-              />
+            <GridItem label='LQTY balance'>
+              <Balance address={address} tokenSymbol='LQTY' tapButton />
             </GridItem>
             {collSymbols.map((symbol) => (
-              <GridItem
-                key={symbol}
-                label={`${symbol} balance`}
-              >
+              <GridItem key={symbol} label={`${symbol} balance`}>
                 <Balance
                   address={address}
                   tokenSymbol={symbol}
@@ -124,7 +121,7 @@ export function AccountScreen({
         <Positions
           address={address}
           columns={1}
-          title={(mode) => mode === "actions" ? null : "Positions"}
+          title={(mode) => (mode === "actions" ? null : "Positions")}
           showNewPositionCard={false}
         />
       </VFlex>
@@ -146,7 +143,7 @@ function Balance({
   const LqtyToken = getProtocolContract("LqtyToken");
   const CollToken = getCollateralContract(
     isCollateralSymbol(tokenSymbol) ? tokenSymbol : null,
-    "CollToken",
+    "CollToken"
   );
 
   const { writeContract } = useWriteContract();
@@ -168,39 +165,48 @@ function Balance({
         })}
       >
         {fmtnum(balance.data, 2) || "−"}
-        <TokenIcon symbol={tokenSymbol} size="mini" />
+        <TokenIcon symbol={tokenSymbol} size='mini' />
       </div>
       {tapButton && (
         <Button
-          mode="primary"
-          size="mini"
-          label="tap"
+          mode='primary'
+          size='mini'
+          label='tap'
           onClick={() => {
-            if ((tokenSymbol === "WSTETH" || tokenSymbol === "RETH") && CollToken) {
-              writeContract({
-                abi: ERC20Faucet,
-                address: CollToken.address,
-                functionName: "tap",
-                args: [],
-              }, {
-                onError: (error) => {
-                  alert(error.message);
+            if (
+              (tokenSymbol === "WSTETH" || tokenSymbol === "RETH") &&
+              CollToken
+            ) {
+              writeContract(
+                {
+                  abi: ERC20Faucet,
+                  address: CollToken.address,
+                  functionName: "tap",
+                  args: [],
                 },
-              });
+                {
+                  onError: (error) => {
+                    alert(error.message);
+                  },
+                }
+              );
               return;
             }
 
             if (tokenSymbol === "LQTY") {
-              writeContract({
-                abi: LqtyToken.abi,
-                address: LqtyToken.address,
-                functionName: "mint",
-                args: [100n * 10n ** 18n],
-              }, {
-                onError: (error) => {
-                  alert(error.message);
+              writeContract(
+                {
+                  abi: LqtyToken.abi,
+                  address: LqtyToken.address,
+                  functionName: "mint",
+                  args: [100n * 10n ** 18n],
                 },
-              });
+                {
+                  onError: (error) => {
+                    alert(error.message);
+                  },
+                }
+              );
               return;
             }
           }}
