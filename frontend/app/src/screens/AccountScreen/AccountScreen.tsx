@@ -6,11 +6,7 @@ import type { ReactNode } from "react";
 import { ERC20Faucet } from "@/src/abi/ERC20Faucet";
 import { Positions } from "@/src/comps/Positions/Positions";
 import { Screen } from "@/src/comps/Screen/Screen";
-import {
-  getCollateralContract,
-  getContracts,
-  getProtocolContract,
-} from "@/src/contracts";
+import { getCollateralContract, getContracts } from "@/src/contracts";
 import { fmtnum } from "@/src/formatting";
 import { useBalance } from "@/src/services/Ethereum";
 import { css } from "@/styled-system/css";
@@ -104,9 +100,6 @@ export function AccountScreen({ address }: { address: Address }) {
             <GridItem label='USDN balance'>
               <Balance address={address} tokenSymbol='USDN' />
             </GridItem>
-            <GridItem label='LQTY balance'>
-              <Balance address={address} tokenSymbol='LQTY' tapButton />
-            </GridItem>
             {collSymbols.map((symbol) => (
               <GridItem key={symbol} label={`${symbol} balance`}>
                 <Balance
@@ -140,7 +133,6 @@ function Balance({
 }) {
   const balance = useBalance(address, tokenSymbol);
 
-  const LqtyToken = getProtocolContract("LqtyToken");
   const CollToken = getCollateralContract(
     isCollateralSymbol(tokenSymbol) ? tokenSymbol : null,
     "CollToken"
@@ -183,23 +175,6 @@ function Balance({
                   address: CollToken.address,
                   functionName: "tap",
                   args: [],
-                },
-                {
-                  onError: (error) => {
-                    alert(error.message);
-                  },
-                }
-              );
-              return;
-            }
-
-            if (tokenSymbol === "LQTY") {
-              writeContract(
-                {
-                  abi: LqtyToken.abi,
-                  address: LqtyToken.address,
-                  functionName: "mint",
-                  args: [100n * 10n ** 18n],
                 },
                 {
                   onError: (error) => {

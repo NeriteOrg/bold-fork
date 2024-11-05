@@ -10,8 +10,6 @@ import { Governance } from "@/src/abi/Governance";
 import { HintHelpers } from "@/src/abi/HintHelpers";
 import { LeverageLSTZapper } from "@/src/abi/LeverageLSTZapper";
 import { LeverageWETHZapper } from "@/src/abi/LeverageWETHZapper";
-import { LqtyStaking } from "@/src/abi/LqtyStaking";
-import { LqtyToken } from "@/src/abi/LqtyToken";
 import { MultiTroveGetter } from "@/src/abi/MultiTroveGetter";
 import { PriceFeed } from "@/src/abi/PriceFeed";
 import { SortedTroves } from "@/src/abi/SortedTroves";
@@ -24,8 +22,6 @@ import {
   CONTRACT_BOLD_TOKEN,
   CONTRACT_COLLATERAL_REGISTRY,
   CONTRACT_HINT_HELPERS,
-  CONTRACT_LQTY_STAKING,
-  CONTRACT_LQTY_TOKEN,
   CONTRACT_MULTI_TROVE_GETTER,
   CONTRACT_WETH,
 } from "@/src/env";
@@ -36,8 +32,6 @@ const protocolAbis = {
   CollateralRegistry,
   Governance,
   HintHelpers,
-  LqtyStaking,
-  LqtyToken,
   MultiTroveGetter,
   WETH: erc20Abi,
 } as const;
@@ -104,8 +98,6 @@ const CONTRACTS: Contracts = {
   CollateralRegistry: { abi: abis.CollateralRegistry, address: CONTRACT_COLLATERAL_REGISTRY },
   Governance: { abi: abis.Governance, address: zeroAddress },
   HintHelpers: { abi: abis.HintHelpers, address: CONTRACT_HINT_HELPERS },
-  LqtyStaking: { abi: abis.LqtyStaking, address: CONTRACT_LQTY_STAKING },
-  LqtyToken: { abi: abis.LqtyToken, address: CONTRACT_LQTY_TOKEN },
   MultiTroveGetter: { abi: abis.MultiTroveGetter, address: CONTRACT_MULTI_TROVE_GETTER },
   WETH: { abi: abis.WETH, address: CONTRACT_WETH },
 

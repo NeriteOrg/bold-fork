@@ -21,7 +21,6 @@ import {
   CHAIN_NAME,
   CHAIN_RPC_URL,
   CONTRACT_BOLD_TOKEN,
-  CONTRACT_LQTY_TOKEN,
   CONTRACT_LUSD_TOKEN,
   WALLET_CONNECT_PROJECT_ID,
 } from "@/src/env";
@@ -106,7 +105,6 @@ export function useBalance(
       }
     )
     .with("USDN", () => CONTRACT_BOLD_TOKEN)
-    .with("LQTY", () => CONTRACT_LQTY_TOKEN)
     .with("LUSD", () => CONTRACT_LUSD_TOKEN)
     .otherwise(() => null);
 
@@ -129,7 +127,7 @@ export function useBalance(
     },
   });
 
-  return demoMode.enabled && token
+  return demoMode.enabled && token && token in ACCOUNT_BALANCES
     ? { data: ACCOUNT_BALANCES[token], isLoading: false }
     : token === "ETH"
     ? ethBalance
@@ -170,17 +168,7 @@ export function useWagmiConfig() {
       },
       ssr: true,
     });
-  }, [
-    CHAIN_BLOCK_EXPLORER,
-    CHAIN_CONTRACT_ENS_REGISTRY,
-    CHAIN_CONTRACT_ENS_RESOLVER,
-    CHAIN_CONTRACT_MULTICALL,
-    CHAIN_CURRENCY,
-    CHAIN_ID,
-    CHAIN_NAME,
-    CHAIN_RPC_URL,
-    WALLET_CONNECT_PROJECT_ID,
-  ]);
+  }, []);
 }
 
 function createChain({

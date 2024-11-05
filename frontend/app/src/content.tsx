@@ -123,11 +123,6 @@ export default {
         title: "Earn with USDN",
         description: "Cover liquidations to earn USDN and collateral assets.",
       },
-      stake: {
-        title: "Stake LQTY",
-        description:
-          "Accrue voting power by staking your LQTY without a minimum lockup period.",
-      },
     },
     statsBar: {
       label: "Protocol stats",
@@ -305,69 +300,6 @@ export default {
       rewardsBold: [
         "USDN rewards",
         "Your earnings from protocol revenue distributions to this stability pool.",
-      ],
-    },
-  },
-
-  // Stake screen
-  stakeScreen: {
-    headline: (lqtyIcon: N, lusdEthIcons: N) => (
-      <>
-        <span>Stake</span>
-        {lqtyIcon} <span>LQTY & get</span>
-        {lusdEthIcons} <span>LUSD + ETH</span>
-      </>
-    ),
-    subheading: (
-      <>
-        Staking LQTY tokens, you earn a share of borrowing and redemption fees
-        in the Liquity V1 protocol.
-      </>
-    ),
-    learnMore: ["https://docs.liquity.org/faq/staking", "Learn more"],
-    accountDetails: {
-      myDeposit: "My deposit",
-      votingPower: "Voting power",
-      votingPowerHelp: (
-        <>
-          Voting power is the percentage of the total staked LQTY that you own.
-        </>
-      ),
-      unclaimed: "Unclaimed rewards",
-    },
-    tabs: {
-      deposit: "Staking",
-      rewards: "Rewards",
-      voting: "Voting",
-    },
-    depositPanel: {
-      label: "Deposit",
-      shareLabel: "Pool share",
-      rewardsLabel: "Available rewards",
-      action: "Next: Summary",
-    },
-    rewardsPanel: {
-      label: "You claim",
-      details: (usdAmount: N, fee: N) => (
-        <>
-          ~${usdAmount} • Expected gas fee ~${fee}
-        </>
-      ),
-      action: "Next: Summary",
-    },
-    votingPanel: {
-      title: "Allocate your voting power",
-      intro: (
-        <>
-          Direct incentives from Nerite protocol revenues towards liquidity
-          providers for USDN. Upvote from Thursday to Tuesday. Downvote all
-          week. <Link href='https://github.com/liquity/V2-gov'>Learn more</Link>
-        </>
-      ),
-    },
-    infoTooltips: {
-      alsoClaimRewardsDeposit: [
-        <>Rewards will be paid out as part of the update transaction.</>,
       ],
     },
   },

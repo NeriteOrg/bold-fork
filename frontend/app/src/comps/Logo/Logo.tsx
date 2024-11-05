@@ -1,7 +1,7 @@
-export function Logo() {
+export function Logo({ size = 46 }: { size?: number }) {
   return (
     <svg
-      width='46'
+      width={size}
       viewBox='0 0 367 229'
       fill='none'
       xmlns='http://www.w3.org/2000/svg'

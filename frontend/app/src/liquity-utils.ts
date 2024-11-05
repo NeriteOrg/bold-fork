@@ -1,5 +1,5 @@
 import type { GraphStabilityPoolDeposit } from "@/src/subgraph-hooks";
-import type { CollIndex, Dnum, PositionEarn, PositionStake, PrefixedTroveId, TroveId } from "@/src/types";
+import type { CollIndex, Dnum, PositionEarn, PrefixedTroveId, TroveId } from "@/src/types";
 import type { Address, CollateralSymbol, CollateralToken } from "@liquity2/uikit";
 
 import { DATA_REFRESH_INTERVAL, INTEREST_RATE_INCREMENT, INTEREST_RATE_MAX, INTEREST_RATE_MIN } from "@/src/constants";
@@ -25,7 +25,7 @@ import * as dn from "dnum";
 import { useMemo } from "react";
 import { match } from "ts-pattern";
 import { encodeAbiParameters, keccak256, parseAbiParameters } from "viem";
-import { useReadContract, useReadContracts } from "wagmi";
+import { useReadContract } from "wagmi";
 
 // As defined in ITroveManager.sol
 export type TroveStatus =
@@ -211,43 +211,6 @@ function earnPositionFromGraph(
     collIndex,
     rewards,
   };
-}
-
-export function useStakePosition(address: null | Address) {
-  const LqtyStaking = getProtocolContract("LqtyStaking");
-  return useReadContracts({
-    contracts: [
-      {
-        ...LqtyStaking,
-        functionName: "stakes",
-        args: [address ?? "0x"],
-      },
-      {
-        ...LqtyStaking,
-        functionName: "totalLQTYStaked",
-      },
-    ],
-    query: {
-      enabled: Boolean(address),
-      refetchInterval: DATA_REFRESH_INTERVAL,
-      select: ([deposit_, totalStaked_]): PositionStake => {
-        const totalStaked = dnum18(totalStaked_);
-        const deposit = dnum18(deposit_);
-        return {
-          type: "stake",
-          deposit,
-          owner: address ?? "0x",
-          totalStaked,
-          rewards: {
-            eth: dnum18(0),
-            lusd: dnum18(0),
-          },
-          share: dn.gt(totalStaked, 0) ? dn.div(deposit, totalStaked) : dnum18(0),
-        };
-      },
-    },
-    allowFailure: false,
-  });
 }
 
 export function useTroveNftUrl(collIndex: null | CollIndex, troveId: null | TroveId) {

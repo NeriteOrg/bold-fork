@@ -9,7 +9,7 @@ import { css } from "@/styled-system/css";
 import { HFlex, TokenIcon } from "@liquity2/uikit";
 import * as dn from "dnum";
 
-const DISPLAYED_PRICES = ["LQTY", "USDN", "ETH"] as const;
+const DISPLAYED_PRICES = ["USDN", "ETH"] as const;
 
 export function ProtocolStats() {
   const prices = useAllPrices();
@@ -43,7 +43,7 @@ export function ProtocolStats() {
         })}
       >
         <HFlex gap={8} alignItems='center'>
-          <Logo size={16} />
+          <Logo size={26} />
           <span>TVL</span>{" "}
           <span>
             <Amount fallback='…' format='compact' prefix='$' value={tvl} />
