@@ -5,20 +5,13 @@ import "@rainbow-me/rainbowkit/styles.css";
 import type { Token } from "@/src/types";
 import type { Address } from "@liquity2/uikit";
 import type { ComponentProps, ReactNode } from "react";
-import type { Chain } from "wagmi/chains";
+import { arbitrum } from "wagmi/chains"; // Add this import
 
 import { getContracts } from "@/src/contracts";
 import { ACCOUNT_BALANCES } from "@/src/demo-mode";
 import { useDemoMode } from "@/src/demo-mode";
 import { dnum18 } from "@/src/dnum-utils";
 import {
-  CHAIN_BLOCK_EXPLORER,
-  CHAIN_CONTRACT_ENS_REGISTRY,
-  CHAIN_CONTRACT_ENS_RESOLVER,
-  CHAIN_CONTRACT_MULTICALL,
-  CHAIN_CURRENCY,
-  CHAIN_ID,
-  CHAIN_NAME,
   CHAIN_RPC_URL,
   CONTRACT_BOLD_TOKEN,
   CONTRACT_LUSD_TOKEN,
@@ -48,7 +41,8 @@ import {
 
 const queryClient = new QueryClient();
 
-export function Ethereum({ children }: { children: ReactNode }) {
+// Renamed component to reflect it's now Arbitrum-specific
+export function ArbitrumProvider({ children }: { children: ReactNode }) {
   const wagmiConfig = useWagmiConfig();
   const rainbowKitProps = useRainbowKitProps();
   return (
@@ -60,6 +54,7 @@ export function Ethereum({ children }: { children: ReactNode }) {
   );
 }
 
+// Rest of the hooks remain the same, just export them from this file
 export function useAccount(): Omit<
   ReturnType<typeof useAccountWagmi>,
   "connector"
@@ -119,7 +114,8 @@ export function useBalance(
     },
   });
 
-  const ethBalance = useBalanceWagmi({
+  // Change ETH to ARB where relevant
+  const arbBalance = useBalanceWagmi({
     address,
     query: {
       select: ({ value }) => dnum18(value ?? 0n),
@@ -130,7 +126,7 @@ export function useBalance(
   return demoMode.enabled && token && token in ACCOUNT_BALANCES
     ? { data: ACCOUNT_BALANCES[token], isLoading: false }
     : token === "ETH"
-    ? ethBalance
+    ? arbBalance
     : tokenBalance;
 }
 
@@ -149,61 +145,14 @@ function useRainbowKitProps(): Omit<
 
 export function useWagmiConfig() {
   return useMemo(() => {
-    const chain = createChain({
-      id: CHAIN_ID,
-      name: CHAIN_NAME,
-      currency: CHAIN_CURRENCY,
-      rpcUrl: CHAIN_RPC_URL,
-      blockExplorer: CHAIN_BLOCK_EXPLORER,
-      contractEnsRegistry: CHAIN_CONTRACT_ENS_REGISTRY,
-      contractEnsResolver: CHAIN_CONTRACT_ENS_RESOLVER,
-      contractMulticall: { address: CHAIN_CONTRACT_MULTICALL },
-    });
     return getDefaultConfig({
       appName: "Nerite",
       projectId: WALLET_CONNECT_PROJECT_ID,
-      chains: [chain],
+      chains: [arbitrum],
       transports: {
-        [chain.id]: http(CHAIN_RPC_URL),
+        [arbitrum.id]: http(CHAIN_RPC_URL),
       },
       ssr: true,
     });
   }, []);
-}
-
-function createChain({
-  id,
-  name,
-  currency,
-  rpcUrl,
-  blockExplorer,
-  contractEnsRegistry,
-  contractEnsResolver,
-  contractMulticall,
-}: {
-  id: number;
-  name: string;
-  currency: { name: string; symbol: string; decimals: number };
-  rpcUrl: string;
-  blockExplorer?: { name: string; url: string };
-  contractEnsRegistry?: { address: Address; block?: number };
-  contractEnsResolver?: { address: Address; block?: number };
-  contractMulticall?: { address: Address; block?: number };
-}): Chain {
-  return {
-    id,
-    name,
-    nativeCurrency: currency,
-    rpcUrls: {
-      default: { http: [rpcUrl] },
-    },
-    blockExplorers: blockExplorer && {
-      default: blockExplorer,
-    },
-    contracts: {
-      ensRegistry: contractEnsRegistry,
-      ensUniversalResolver: contractEnsResolver,
-      multicall3: contractMulticall,
-    },
-  } satisfies Chain;
 }

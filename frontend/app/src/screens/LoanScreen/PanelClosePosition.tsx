@@ -7,7 +7,7 @@ import content from "@/src/content";
 import { getContracts } from "@/src/contracts";
 import { fmtnum } from "@/src/formatting";
 import { getPrefixedTroveId } from "@/src/liquity-utils";
-import { useAccount, useBalance } from "@/src/services/Ethereum";
+import { useAccount, useBalance } from "@/src/services/Arbitrum";
 import { usePrice } from "@/src/services/Prices";
 import { useTransactionFlow } from "@/src/services/TransactionFlow";
 import { css } from "@/styled-system/css";

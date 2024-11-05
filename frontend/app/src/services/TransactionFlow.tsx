@@ -30,7 +30,7 @@ import type { ComponentType, ReactNode } from "react";
 import { LOCAL_STORAGE_PREFIX } from "@/src/constants";
 import { getContracts } from "@/src/contracts";
 import { jsonParseWithDnum, jsonStringifyWithDnum } from "@/src/dnum-utils";
-import { useAccount, useWagmiConfig } from "@/src/services/Ethereum";
+import { useAccount, useWagmiConfig } from "@/src/services/Arbitrum";
 import { closeLoanPosition } from "@/src/tx-flows/closeLoanPosition";
 import { earnClaimRewards } from "@/src/tx-flows/earnClaimRewards";
 import { earnDeposit } from "@/src/tx-flows/earnDeposit";
