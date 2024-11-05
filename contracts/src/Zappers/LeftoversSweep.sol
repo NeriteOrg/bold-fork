@@ -13,13 +13,20 @@ contract LeftoversSweep {
         address receiver;
     }
 
-    function _setInitialBalances(IERC20 _collToken, IBoldToken _boldToken, InitialBalances memory _initialBalances)
+    function _setInitialTokensAndBalances(IERC20 _collToken, IBoldToken _boldToken, InitialBalances memory _initialBalances)
+        internal
+        view
+    {
+        _setInitialTokensBalancesAndReceiver(_collToken, _boldToken, _initialBalances, msg.sender);
+    }
+
+    function _setInitialTokensBalancesAndReceiver(IERC20 _collToken, IBoldToken _boldToken, InitialBalances memory _initialBalances, address _receiver)
         internal
         view
     {
         _initialBalances.tokens[0] = _collToken;
         _initialBalances.tokens[1] = _boldToken;
-        _setInitialBalancesAndReceiver(_initialBalances, msg.sender);
+        _setInitialBalancesAndReceiver(_initialBalances, _receiver);
     }
 
     function _setInitialBalances(InitialBalances memory _initialBalances) internal view {

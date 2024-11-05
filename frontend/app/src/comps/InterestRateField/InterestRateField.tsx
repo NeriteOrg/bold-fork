@@ -187,11 +187,11 @@ export function InterestRateField({
                       gap: 8,
                     })}
                   >
-                    <img
-                      src={blo(delegate)}
+                    <Image
                       alt=""
                       width={24}
                       height={24}
+                      src={blo(delegate)}
                       className={css({
                         display: "block",
                         borderRadius: 4,
@@ -215,7 +215,8 @@ export function InterestRateField({
                 items={DELEGATE_MODES.map((item) => ({
                   label: item.label,
                   secondary: item.secondary,
-                  disabled: item.type === "strategy" ? "Coming soon" : false,
+                  disabled: item.type === "strategy",
+                  disabledReason: "Coming soon",
                 }))}
                 menuWidth={300}
                 menuPlacement="end"
