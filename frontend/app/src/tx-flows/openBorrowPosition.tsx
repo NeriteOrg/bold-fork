@@ -4,12 +4,19 @@ import { Amount } from "@/src/comps/Amount/Amount";
 import { ETH_GAS_COMPENSATION } from "@/src/constants";
 import { dnum18 } from "@/src/dnum-utils";
 import { fmtnum } from "@/src/formatting";
-import { getCollToken, usePredictOpenTroveUpfrontFee } from "@/src/liquity-utils";
+import {
+  getCollToken,
+  usePredictOpenTroveUpfrontFee,
+} from "@/src/liquity-utils";
 import { LoanCard } from "@/src/screens/TransactionsScreen/LoanCard";
 import { TransactionDetailsRow } from "@/src/screens/TransactionsScreen/TransactionsScreen";
 import { usePrice } from "@/src/services/Prices";
 import { vAddress, vCollIndex, vDnum } from "@/src/valibot-utils";
-import { ADDRESS_ZERO, COLLATERALS as KNOWN_COLLATERALS, shortenAddress } from "@liquity2/uikit";
+import {
+  ADDRESS_ZERO,
+  COLLATERALS as KNOWN_COLLATERALS,
+  shortenAddress,
+} from "@liquity2/uikit";
 import * as dn from "dnum";
 import * as v from "valibot";
 import { parseEventLogs } from "viem";
@@ -53,10 +60,7 @@ const RequestSchema = v.object({
 
 export type Request = v.InferOutput<typeof RequestSchema>;
 
-type Step =
-  | "approveLst"
-  | "openTroveEth"
-  | "openTroveLst";
+type Step = "approveLst" | "openTroveEth" | "openTroveLst";
 
 export const openBorrowPosition: FlowDeclaration<Request, Step> = {
   title: "Review & Send Transaction",
@@ -67,14 +71,15 @@ export const openBorrowPosition: FlowDeclaration<Request, Step> = {
     const upfrontFee = usePredictOpenTroveUpfrontFee(
       request.collIndex,
       request.boldAmount,
-      request.interestRateDelegate?.[0] ?? request.annualInterestRate,
+      request.interestRateDelegate?.[0] ?? request.annualInterestRate
     );
-    const boldAmountWithFee = upfrontFee.data && dn.add(request.boldAmount, upfrontFee.data);
+    const boldAmountWithFee =
+      upfrontFee.data && dn.add(request.boldAmount, upfrontFee.data);
 
     return (
       <LoanCard
         leverageMode={false}
-        loadingState="success"
+        loadingState='success'
         loan={{
           type: "borrow",
           troveId: "0x",
@@ -99,93 +104,91 @@ export const openBorrowPosition: FlowDeclaration<Request, Step> = {
     const upfrontFee = usePredictOpenTroveUpfrontFee(
       request.collIndex,
       request.boldAmount,
-      request.interestRateDelegate?.[0] ?? request.annualInterestRate,
+      request.interestRateDelegate?.[0] ?? request.annualInterestRate
     );
-    const boldAmountWithFee = upfrontFee.data && dn.add(request.boldAmount, upfrontFee.data);
+    const boldAmountWithFee =
+      upfrontFee.data && dn.add(request.boldAmount, upfrontFee.data);
 
-    return collateral && (
-      <>
-        <TransactionDetailsRow
-          label="Collateral"
-          value={[
-            `${fmtnum(request.collAmount)} ${collateral.name}`,
-            <Amount
-              key="end"
-              fallback="…"
-              prefix="$"
-              value={collPrice && dn.mul(request.collAmount, collPrice)}
-            />,
-          ]}
-        />
-        <TransactionDetailsRow
-          label="Loan"
-          value={[
-            <Amount
-              key="start"
-              fallback="…"
-              value={boldAmountWithFee}
-              suffix=" BOLD"
-            />,
-            <Amount
-              key="end"
-              fallback="…"
-              prefix="Incl. "
-              value={upfrontFee.data}
-              suffix=" BOLD upfront fee"
-            />,
-          ]}
-        />
-        <TransactionDetailsRow
-          label="Interest rate"
-          value={[
-            <Amount
-              key="start"
-              value={request.annualInterestRate}
-              percentage
-            />,
-            <Amount
-              key="end"
-              fallback="…"
-              value={boldAmountWithFee && dn.mul(boldAmountWithFee, request.annualInterestRate)}
-              suffix=" BOLD per year"
-            />,
-          ]}
-        />
-        {request.interestRateDelegate && (
+    return (
+      collateral && (
+        <>
           <TransactionDetailsRow
-            label="Interest rate delegate"
+            label='Collateral'
             value={[
-              <span
-                key="start"
-                title={request.interestRateDelegate[0]}
-              >
-                {shortenAddress(request.interestRateDelegate[0], 4)}
-              </span>,
+              `${fmtnum(request.collAmount)} ${collateral.name}`,
+              <Amount
+                key='end'
+                fallback='…'
+                prefix='$'
+                value={collPrice && dn.mul(request.collAmount, collPrice)}
+              />,
             ]}
           />
-        )}
-        <TransactionDetailsRow
-          label="Refundable gas deposit"
-          value={[
-            <div
-              key="start"
-              title={`${fmtnum(ETH_GAS_COMPENSATION, "full")} ETH`}
-            >
-              {fmtnum(ETH_GAS_COMPENSATION, 4)} ETH
-            </div>,
-            "Only used in case of liquidation",
-          ]}
-        />
-      </>
+          <TransactionDetailsRow
+            label='Loan'
+            value={[
+              <Amount
+                key='start'
+                fallback='…'
+                value={boldAmountWithFee}
+                suffix=' USDN'
+              />,
+              <Amount
+                key='end'
+                fallback='…'
+                prefix='Incl. '
+                value={upfrontFee.data}
+                suffix=' USDN upfront fee'
+              />,
+            ]}
+          />
+          <TransactionDetailsRow
+            label='Interest rate'
+            value={[
+              <Amount
+                key='start'
+                value={request.annualInterestRate}
+                percentage
+              />,
+              <Amount
+                key='end'
+                fallback='…'
+                value={
+                  boldAmountWithFee &&
+                  dn.mul(boldAmountWithFee, request.annualInterestRate)
+                }
+                suffix=' USDN per year'
+              />,
+            ]}
+          />
+          {request.interestRateDelegate && (
+            <TransactionDetailsRow
+              label='Interest rate delegate'
+              value={[
+                <span key='start' title={request.interestRateDelegate[0]}>
+                  {shortenAddress(request.interestRateDelegate[0], 4)}
+                </span>,
+              ]}
+            />
+          )}
+          <TransactionDetailsRow
+            label='Refundable gas deposit'
+            value={[
+              <div
+                key='start'
+                title={`${fmtnum(ETH_GAS_COMPENSATION, "full")} ETH`}
+              >
+                {fmtnum(ETH_GAS_COMPENSATION, 4)} ETH
+              </div>,
+              "Only used in case of liquidation",
+            ]}
+          />
+        </>
+      )
     );
   },
 
-  async getSteps({
-    account,
-    contracts,
-    request,
-    wagmiConfig,
-  }) {
+  async getSteps({ account, contracts, request, wagmiConfig }) {
     const collateral = contracts.collaterals[request.collIndex];
 
     if (collateral.symbol === "ETH") {
@@ -202,16 +205,13 @@ export const openBorrowPosition: FlowDeclaration<Request, Step> = {
       await readContract(wagmiConfig, {
         ...CollToken,
         functionName: "allowance",
-        args: [
-          account.address ?? ADDRESS_ZERO,
-          GasCompZapper.address,
-        ],
-      }),
+        args: [account.address ?? ADDRESS_ZERO, GasCompZapper.address],
+      })
     );
 
     const isApproved = !dn.gt(
       dn.add(request.collAmount, ETH_GAS_COMPENSATION),
-      allowance,
+      allowance
     );
 
     const steps: Step[] = [];
@@ -247,7 +247,7 @@ export const openBorrowPosition: FlowDeclaration<Request, Step> = {
         eventName: "TroveOperation",
       });
       if (troveOperation) {
-        return "0x" + (troveOperation.args._troveId.toString(16));
+        return "0x" + troveOperation.args._troveId.toString(16);
       }
     }
     return null;
@@ -265,10 +265,7 @@ export const openBorrowPosition: FlowDeclaration<Request, Step> = {
       return {
         ...CollToken,
         functionName: "approve" as const,
-        args: [
-          GasCompZapper.address,
-          request.collAmount[0],
-        ],
+        args: [GasCompZapper.address, request.collAmount[0]],
       };
     }
 
@@ -277,24 +274,26 @@ export const openBorrowPosition: FlowDeclaration<Request, Step> = {
       return {
         ...collateral.contracts.WETHZapper,
         functionName: "openTroveWithRawETH" as const,
-        args: [{
-          owner: request.owner ?? ADDRESS_ZERO,
-          ownerIndex: BigInt(request.ownerIndex),
-          collAmount: 0n,
-          boldAmount: request.boldAmount[0],
-          upperHint: request.upperHint[0],
-          lowerHint: request.lowerHint[0],
-          annualInterestRate: request.interestRateDelegate
-            ? 0n
-            : request.annualInterestRate[0],
-          batchManager: request.interestRateDelegate
-            ? request.interestRateDelegate[0]
-            : ADDRESS_ZERO,
-          maxUpfrontFee: request.maxUpfrontFee[0],
-          addManager: ADDRESS_ZERO,
-          removeManager: ADDRESS_ZERO,
-          receiver: ADDRESS_ZERO,
-        }],
+        args: [
+          {
+            owner: request.owner ?? ADDRESS_ZERO,
+            ownerIndex: BigInt(request.ownerIndex),
+            collAmount: 0n,
+            boldAmount: request.boldAmount[0],
+            upperHint: request.upperHint[0],
+            lowerHint: request.lowerHint[0],
+            annualInterestRate: request.interestRateDelegate
+              ? 0n
+              : request.annualInterestRate[0],
+            batchManager: request.interestRateDelegate
+              ? request.interestRateDelegate[0]
+              : ADDRESS_ZERO,
+            maxUpfrontFee: request.maxUpfrontFee[0],
+            addManager: ADDRESS_ZERO,
+            removeManager: ADDRESS_ZERO,
+            receiver: ADDRESS_ZERO,
+          },
+        ],
         value: request.collAmount[0] + ETH_GAS_COMPENSATION[0],
       };
     }
@@ -304,24 +303,26 @@ export const openBorrowPosition: FlowDeclaration<Request, Step> = {
       return {
         ...collateral.contracts.GasCompZapper,
         functionName: "openTroveWithRawETH" as const,
-        args: [{
-          owner: request.owner ?? ADDRESS_ZERO,
-          ownerIndex: BigInt(request.ownerIndex),
-          collAmount: request.collAmount[0],
-          boldAmount: request.boldAmount[0],
-          upperHint: request.upperHint[0],
-          lowerHint: request.lowerHint[0],
-          annualInterestRate: request.interestRateDelegate
-            ? 0n
-            : request.annualInterestRate[0],
-          batchManager: request.interestRateDelegate
-            ? request.interestRateDelegate[0]
-            : ADDRESS_ZERO,
-          maxUpfrontFee: request.maxUpfrontFee[0],
-          addManager: ADDRESS_ZERO,
-          removeManager: ADDRESS_ZERO,
-          receiver: ADDRESS_ZERO,
-        }],
+        args: [
+          {
+            owner: request.owner ?? ADDRESS_ZERO,
+            ownerIndex: BigInt(request.ownerIndex),
+            collAmount: request.collAmount[0],
+            boldAmount: request.boldAmount[0],
+            upperHint: request.upperHint[0],
+            lowerHint: request.lowerHint[0],
+            annualInterestRate: request.interestRateDelegate
+              ? 0n
+              : request.annualInterestRate[0],
+            batchManager: request.interestRateDelegate
+              ? request.interestRateDelegate[0]
+              : ADDRESS_ZERO,
+            maxUpfrontFee: request.maxUpfrontFee[0],
+            addManager: ADDRESS_ZERO,
+            removeManager: ADDRESS_ZERO,
+            receiver: ADDRESS_ZERO,
+          },
+        ],
         value: ETH_GAS_COMPENSATION[0],
       };
     }

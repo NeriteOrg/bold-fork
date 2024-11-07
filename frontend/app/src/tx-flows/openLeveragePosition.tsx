@@ -54,23 +54,25 @@ export const openLeveragePosition: FlowDeclaration<Request, Step> = {
 
   Summary({ flow }) {
     const collateral = getCollToken(flow.request.collIndex);
-    return collateral && (
-      <LoanCard
-        leverageMode={true}
-        loadingState="success"
-        loan={{
-          troveId: "0x",
-          batchManager: null,
-          borrower: flow.request.owner,
-          borrowed: flow.request.boldAmount,
-          collIndex: flow.request.collIndex,
-          deposit: flow.request.collAmount,
-          interestRate: flow.request.annualInterestRate,
-          type: "borrow",
-        }}
-        onRetry={() => {}}
-        txPreviewMode
-      />
+    return (
+      collateral && (
+        <LoanCard
+          leverageMode={true}
+          loadingState='success'
+          loan={{
+            troveId: "0x",
+            batchManager: null,
+            borrower: flow.request.owner,
+            borrowed: flow.request.boldAmount,
+            collIndex: flow.request.collIndex,
+            deposit: flow.request.collAmount,
+            interestRate: flow.request.annualInterestRate,
+            type: "borrow",
+          }}
+          onRetry={() => {}}
+          txPreviewMode
+        />
+      )
     );
   },
 
@@ -78,46 +80,50 @@ export const openLeveragePosition: FlowDeclaration<Request, Step> = {
     const { request } = flow;
     const collateral = getCollToken(flow.request.collIndex);
     const collPrice = usePrice(collateral?.symbol ?? null);
-    const boldPrice = usePrice("BOLD");
+    const boldPrice = usePrice("USDN");
 
     const totalCollateral = dn.add(request.collAmount, request.flashLoanAmount);
 
-    return collateral && (
-      <>
-        <TransactionDetailsRow
-          label="Leveraged deposit"
-          value={[
-            `${fmtnum(totalCollateral)} ${collateral.name}`,
-            collPrice && `$${fmtnum(dn.mul(totalCollateral, collPrice))}`,
-          ]}
-        />
-        <TransactionDetailsRow
-          label="Borrowed BOLD"
-          value={[
-            `${fmtnum(request.boldAmount)} BOLD`,
-            boldPrice && `$${fmtnum(dn.mul(request.boldAmount, boldPrice))}`,
-          ]}
-        />
-        <TransactionDetailsRow
-          label="Interest rate"
-          value={[
-            `${fmtnum(request.annualInterestRate, 2, 100)}%`,
-            `${fmtnum(dn.mul(request.boldAmount, request.annualInterestRate))} BOLD per year`,
-          ]}
-        />
-        <TransactionDetailsRow
-          label="Refundable gas deposit"
-          value={[
-            <div
-              key="start"
-              title={`${fmtnum(ETH_GAS_COMPENSATION, "full")} ETH`}
-            >
-              {fmtnum(ETH_GAS_COMPENSATION, 4)} ETH
-            </div>,
-            "Only used in case of liquidation",
-          ]}
-        />
-      </>
+    return (
+      collateral && (
+        <>
+          <TransactionDetailsRow
+            label='Leveraged deposit'
+            value={[
+              `${fmtnum(totalCollateral)} ${collateral.name}`,
+              collPrice && `$${fmtnum(dn.mul(totalCollateral, collPrice))}`,
+            ]}
+          />
+          <TransactionDetailsRow
+            label='Borrowed USDN'
+            value={[
+              `${fmtnum(request.boldAmount)} USDN`,
+              boldPrice && `$${fmtnum(dn.mul(request.boldAmount, boldPrice))}`,
+            ]}
+          />
+          <TransactionDetailsRow
+            label='Interest rate'
+            value={[
+              `${fmtnum(request.annualInterestRate, 2, 100)}%`,
+              `${fmtnum(
+                dn.mul(request.boldAmount, request.annualInterestRate)
+              )} USDN per year`,
+            ]}
+          />
+          <TransactionDetailsRow
+            label='Refundable gas deposit'
+            value={[
+              <div
+                key='start'
+                title={`${fmtnum(ETH_GAS_COMPENSATION, "full")} ETH`}
+              >
+                {fmtnum(ETH_GAS_COMPENSATION, 4)} ETH
+              </div>,
+              "Only used in case of liquidation",
+            ]}
+          />
+        </>
+      )
     );
   },
 
@@ -142,7 +148,7 @@ export const openLeveragePosition: FlowDeclaration<Request, Step> = {
         eventName: "TroveOperation",
       });
       if (troveOperation) {
-        return "0x" + (troveOperation.args._troveId.toString(16));
+        return "0x" + troveOperation.args._troveId.toString(16);
       }
     }
     return null;
@@ -156,21 +162,23 @@ export const openLeveragePosition: FlowDeclaration<Request, Step> = {
       return {
         ...collateral.contracts.LeverageWETHZapper,
         functionName: "openLeveragedTroveWithRawETH" as const,
-        args: [{
-          owner: request.owner ?? ADDRESS_ZERO,
-          ownerIndex: BigInt(request.ownerIndex),
-          collAmount: request.collAmount[0],
-          boldAmount: request.boldAmount[0],
-          upperHint: request.upperHint[0],
-          lowerHint: request.lowerHint[0],
-          annualInterestRate: request.annualInterestRate[0],
-          batchManager: ADDRESS_ZERO,
-          maxUpfrontFee: request.maxUpfrontFee[0],
-          addManager: ADDRESS_ZERO,
-          removeManager: ADDRESS_ZERO,
-          receiver: ADDRESS_ZERO,
-          flashLoanAmount: request.flashLoanAmount[0],
-        }],
+        args: [
+          {
+            owner: request.owner ?? ADDRESS_ZERO,
+            ownerIndex: BigInt(request.ownerIndex),
+            collAmount: request.collAmount[0],
+            boldAmount: request.boldAmount[0],
+            upperHint: request.upperHint[0],
+            lowerHint: request.lowerHint[0],
+            annualInterestRate: request.annualInterestRate[0],
+            batchManager: ADDRESS_ZERO,
+            maxUpfrontFee: request.maxUpfrontFee[0],
+            addManager: ADDRESS_ZERO,
+            removeManager: ADDRESS_ZERO,
+            receiver: ADDRESS_ZERO,
+            flashLoanAmount: request.flashLoanAmount[0],
+          },
+        ],
         value: request.collAmount[0] + ETH_GAS_COMPENSATION[0],
       };
     }
@@ -180,21 +188,23 @@ export const openLeveragePosition: FlowDeclaration<Request, Step> = {
       return {
         ...collateral.contracts.LeverageLSTZapper,
         functionName: "openLeveragedTroveWithRawETH" as const,
-        args: [{
-          owner: request.owner ?? ADDRESS_ZERO,
-          ownerIndex: BigInt(request.ownerIndex),
-          collAmount: request.collAmount[0],
-          boldAmount: request.boldAmount[0],
-          upperHint: request.upperHint[0],
-          lowerHint: request.lowerHint[0],
-          annualInterestRate: request.annualInterestRate[0],
-          batchManager: ADDRESS_ZERO,
-          maxUpfrontFee: request.maxUpfrontFee[0],
-          addManager: ADDRESS_ZERO,
-          removeManager: ADDRESS_ZERO,
-          receiver: ADDRESS_ZERO,
-          flashLoanAmount: request.flashLoanAmount[0],
-        }],
+        args: [
+          {
+            owner: request.owner ?? ADDRESS_ZERO,
+            ownerIndex: BigInt(request.ownerIndex),
+            collAmount: request.collAmount[0],
+            boldAmount: request.boldAmount[0],
+            upperHint: request.upperHint[0],
+            lowerHint: request.lowerHint[0],
+            annualInterestRate: request.annualInterestRate[0],
+            batchManager: ADDRESS_ZERO,
+            maxUpfrontFee: request.maxUpfrontFee[0],
+            addManager: ADDRESS_ZERO,
+            removeManager: ADDRESS_ZERO,
+            receiver: ADDRESS_ZERO,
+            flashLoanAmount: request.flashLoanAmount[0],
+          },
+        ],
         value: ETH_GAS_COMPENSATION[0],
       };
     }

@@ -4,13 +4,25 @@ import type { FlowDeclaration } from "@/src/services/TransactionFlow";
 import { dnum18 } from "@/src/dnum-utils";
 import { CHAIN_BLOCK_EXPLORER } from "@/src/env";
 import { fmtnum } from "@/src/formatting";
-import { parsePrefixedTroveId, usePredictAdjustInterestRateUpfrontFee } from "@/src/liquity-utils";
+import {
+  parsePrefixedTroveId,
+  usePredictAdjustInterestRateUpfrontFee,
+} from "@/src/liquity-utils";
 import { LoanCard } from "@/src/screens/TransactionsScreen/LoanCard";
 import { TransactionDetailsRow } from "@/src/screens/TransactionsScreen/TransactionsScreen";
 import { useLoanById } from "@/src/subgraph-hooks";
-import { vAddress, vCollIndex, vDnum, vPrefixedTroveId } from "@/src/valibot-utils";
+import {
+  vAddress,
+  vCollIndex,
+  vDnum,
+  vPrefixedTroveId,
+} from "@/src/valibot-utils";
 import { css } from "@/styled-system/css";
-import { ADDRESS_ZERO, AnchorTextButton, shortenAddress } from "@liquity2/uikit";
+import {
+  ADDRESS_ZERO,
+  AnchorTextButton,
+  shortenAddress,
+} from "@liquity2/uikit";
 import { blo } from "blo";
 import * as dn from "dnum";
 import Image from "next/image";
@@ -82,24 +94,28 @@ export const updateLoanInterestRate: FlowDeclaration<Request, Step> = {
       request.collIndex,
       troveId,
       request.interestRateDelegate?.[0] ?? request.annualInterestRate,
-      loan.data?.batchManager !== null,
+      loan.data?.batchManager !== null
     );
 
-    const borrowedWithFee = upfrontFee.data && loan.data?.borrowed && dn.add(
-      loan.data.borrowed,
-      upfrontFee.data,
-    );
+    const borrowedWithFee =
+      upfrontFee.data &&
+      loan.data?.borrowed &&
+      dn.add(loan.data.borrowed, upfrontFee.data);
 
     return (
       <LoanCard
         leverageMode={false}
         loadingState={loadingState}
-        loan={!loan.data ? null : {
-          ...loan.data,
-          borrowed: borrowedWithFee ?? dnum18(0),
-          interestRate: request.annualInterestRate,
-          batchManager: request.interestRateDelegate?.[0] ?? null,
-        }}
+        loan={
+          !loan.data
+            ? null
+            : {
+                ...loan.data,
+                borrowed: borrowedWithFee ?? dnum18(0),
+                interestRate: request.annualInterestRate,
+                batchManager: request.interestRateDelegate?.[0] ?? null,
+              }
+        }
         prevLoan={loan.data}
         onRetry={() => {}}
         txPreviewMode
@@ -110,62 +126,64 @@ export const updateLoanInterestRate: FlowDeclaration<Request, Step> = {
     const { request } = flow;
 
     const loan = useLoanById(flow.request.prefixedTroveId);
-    const boldPerYear = dn.mul(loan.data?.borrowed ?? 0n, request.annualInterestRate);
+    const boldPerYear = dn.mul(
+      loan.data?.borrowed ?? 0n,
+      request.annualInterestRate
+    );
 
-    return request.interestRateDelegate
-      ? (
-        <TransactionDetailsRow
-          label="Interest rate delegate"
-          value={[
-            <AnchorTextButton
-              key="start"
-              label={
-                <div
-                  title={request.interestRateDelegate[0]}
+    return request.interestRateDelegate ? (
+      <TransactionDetailsRow
+        label='Interest rate delegate'
+        value={[
+          <AnchorTextButton
+            key='start'
+            label={
+              <div
+                title={request.interestRateDelegate[0]}
+                className={css({
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                })}
+              >
+                <Image
+                  alt=''
+                  width={16}
+                  height={16}
+                  src={blo(request.interestRateDelegate[0])}
                   className={css({
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 4,
+                    display: "block",
+                    borderRadius: 4,
                   })}
-                >
-                  <Image
-                    alt=""
-                    width={16}
-                    height={16}
-                    src={blo(request.interestRateDelegate[0])}
-                    className={css({
-                      display: "block",
-                      borderRadius: 4,
-                    })}
-                  />
-                  {shortenAddress(request.interestRateDelegate[0], 4).toLowerCase()}
-                </div>
-              }
-              href={`${CHAIN_BLOCK_EXPLORER?.url}address/${request.interestRateDelegate[0]}`}
-              external
-            />,
-            <div key="end">
-              {fmtnum(request.annualInterestRate, "full", 100)}% (~{fmtnum(boldPerYear, 4)} BOLD per year)
-            </div>,
-          ]}
-        />
-      )
-      : (
-        <TransactionDetailsRow
-          label="Interest rate"
-          value={[
-            <div key="start">
-              {fmtnum(request.annualInterestRate, "full", 100)}%
-            </div>,
-            <div
-              key="end"
-              title={`${fmtnum(boldPerYear, "full")} BOLD per year`}
-            >
-              ~{fmtnum(boldPerYear, 4)} BOLD per year
-            </div>,
-          ]}
-        />
-      );
+                />
+                {shortenAddress(
+                  request.interestRateDelegate[0],
+                  4
+                ).toLowerCase()}
+              </div>
+            }
+            href={`${CHAIN_BLOCK_EXPLORER?.url}address/${request.interestRateDelegate[0]}`}
+            external
+          />,
+          <div key='end'>
+            {fmtnum(request.annualInterestRate, "full", 100)}% (~
+            {fmtnum(boldPerYear, 4)} USDN per year)
+          </div>,
+        ]}
+      />
+    ) : (
+      <TransactionDetailsRow
+        label='Interest rate'
+        value={[
+          <div key='start'>
+            {fmtnum(request.annualInterestRate, "full", 100)}%
+          </div>,
+          <div key='end' title={`${fmtnum(boldPerYear, "full")} USDN per year`}>
+            ~{fmtnum(boldPerYear, 4)} USDN per year
+          </div>,
+        ]}
+      />
+    );
   },
   async getSteps({ request, contracts, wagmiConfig }) {
     const collateral = contracts.collaterals[request.collIndex];
@@ -175,11 +193,12 @@ export const updateLoanInterestRate: FlowDeclaration<Request, Step> = {
       return ["setInterestBatchManager"];
     }
 
-    const isInBatch = (await readContract(wagmiConfig, {
-      ...collateral.contracts.BorrowerOperations,
-      functionName: "interestBatchManagerOf",
-      args: [BigInt(troveId)],
-    })) !== ADDRESS_ZERO;
+    const isInBatch =
+      (await readContract(wagmiConfig, {
+        ...collateral.contracts.BorrowerOperations,
+        functionName: "interestBatchManagerOf",
+        args: [BigInt(troveId)],
+      })) !== ADDRESS_ZERO;
 
     return isInBatch ? ["unsetInterestBatchManager"] : ["adjustInterestRate"];
   },

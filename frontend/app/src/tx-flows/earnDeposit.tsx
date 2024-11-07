@@ -46,32 +46,30 @@ export const earnDeposit: FlowDeclaration<Request, Step> = {
   Summary({ flow }) {
     const collateral = getCollToken(flow.request.collIndex);
     const symbol = collateral?.symbol;
-    return symbol && (
-      <EarnPositionSummary
-        address={flow.request.depositor}
-        collSymbol={symbol}
-        txPreviewMode
-      />
+    return (
+      symbol && (
+        <EarnPositionSummary
+          address={flow.request.depositor}
+          collSymbol={symbol}
+          txPreviewMode
+        />
+      )
     );
   },
 
   Details({ flow }) {
     const { request } = flow;
-    const boldPrice = usePrice("BOLD");
+    const boldPrice = usePrice("USDN");
     return (
       <>
         <TransactionDetailsRow
-          label="You deposit"
+          label='You deposit'
           value={[
+            <Amount key='start' value={request.boldAmount} suffix=' USDN' />,
             <Amount
-              key="start"
-              value={request.boldAmount}
-              suffix=" BOLD"
-            />,
-            <Amount
-              key="end"
+              key='end'
               value={boldPrice && dn.mul(request.boldAmount, boldPrice)}
-              prefix="$"
+              prefix='$'
             />,
           ]}
         />
@@ -97,10 +95,7 @@ export const earnDeposit: FlowDeclaration<Request, Step> = {
     return {
       ...collateral.contracts.StabilityPool,
       functionName: "provideToSP",
-      args: [
-        request.boldAmount[0],
-        request.claim,
-      ],
+      args: [request.boldAmount[0], request.claim],
     };
   },
 };

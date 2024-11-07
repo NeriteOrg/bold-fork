@@ -17,29 +17,26 @@ import type { Request as EarnDepositRequest } from "@/src/tx-flows/earnDeposit";
 import type { Request as EarnWithdrawRequest } from "@/src/tx-flows/earnWithdraw";
 import type { Request as OpenBorrowPositionRequest } from "@/src/tx-flows/openBorrowPosition";
 import type { Request as OpenLeveragePositionRequest } from "@/src/tx-flows/openLeveragePosition";
-import type { Request as StakeClaimRewardsRequest } from "@/src/tx-flows/stakeClaimRewards";
-import type { Request as StakeDepositRequest } from "@/src/tx-flows/stakeDeposit";
-import type { Request as UnstakeDepositRequest } from "@/src/tx-flows/unstakeDeposit";
 import type { Request as UpdateBorrowPositionRequest } from "@/src/tx-flows/updateBorrowPosition";
 import type { Request as UpdateLeveragePositionRequest } from "@/src/tx-flows/updateLeveragePosition";
 import type { Request as UpdateLoanInterestRateRequest } from "@/src/tx-flows/updateLoanInterestRate";
 import type { Address } from "@/src/types";
-import type { GetTransactionReceiptReturnType, WriteContractParameters } from "@wagmi/core";
+import type {
+  GetTransactionReceiptReturnType,
+  WriteContractParameters,
+} from "@wagmi/core";
 import type { ComponentType, ReactNode } from "react";
 
 import { LOCAL_STORAGE_PREFIX } from "@/src/constants";
 import { getContracts } from "@/src/contracts";
 import { jsonParseWithDnum, jsonStringifyWithDnum } from "@/src/dnum-utils";
-import { useAccount, useWagmiConfig } from "@/src/services/Ethereum";
+import { useAccount, useWagmiConfig } from "@/src/services/Arbitrum";
 import { closeLoanPosition } from "@/src/tx-flows/closeLoanPosition";
 import { earnClaimRewards } from "@/src/tx-flows/earnClaimRewards";
 import { earnDeposit } from "@/src/tx-flows/earnDeposit";
 import { earnWithdraw } from "@/src/tx-flows/earnWithdraw";
 import { openBorrowPosition } from "@/src/tx-flows/openBorrowPosition";
 import { openLeveragePosition } from "@/src/tx-flows/openLeveragePosition";
-import { stakeClaimRewards } from "@/src/tx-flows/stakeClaimRewards";
-import { stakeDeposit } from "@/src/tx-flows/stakeDeposit";
-import { unstakeDeposit } from "@/src/tx-flows/unstakeDeposit";
 import { updateBorrowPosition } from "@/src/tx-flows/updateBorrowPosition";
 import { updateLeveragePosition } from "@/src/tx-flows/updateLeveragePosition";
 import { updateLoanInterestRate } from "@/src/tx-flows/updateLoanInterestRate";
@@ -47,7 +44,13 @@ import { noop } from "@/src/utils";
 import { vAddress, vHash } from "@/src/valibot-utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import * as v from "valibot";
 import { useTransactionReceipt, useWriteContract } from "wagmi";
 
@@ -60,9 +63,6 @@ export type FlowRequest =
   | EarnWithdrawRequest
   | OpenBorrowPositionRequest
   | OpenLeveragePositionRequest
-  | StakeClaimRewardsRequest
-  | StakeDepositRequest
-  | UnstakeDepositRequest
   | UpdateBorrowPositionRequest
   | UpdateLeveragePositionRequest
   | UpdateLoanInterestRateRequest;
@@ -79,9 +79,6 @@ const flowDeclarations: {
   earnWithdraw,
   openBorrowPosition,
   openLeveragePosition,
-  stakeClaimRewards,
-  stakeDeposit,
-  unstakeDeposit,
   updateBorrowPosition,
   updateLeveragePosition,
   updateLoanInterestRate,
@@ -94,9 +91,6 @@ const FlowIdSchema = v.union([
   v.literal("earnWithdraw"),
   v.literal("openBorrowPosition"),
   v.literal("openLeveragePosition"),
-  v.literal("stakeClaimRewards"),
-  v.literal("stakeDeposit"),
-  v.literal("unstakeDeposit"),
   v.literal("updateBorrowPosition"),
   v.literal("updateLeveragePosition"),
   v.literal("updateLoanInterestRate"),
@@ -107,24 +101,29 @@ type ExtractStepId<T> = T extends FlowDeclaration<any, infer S> ? S : never;
 type FlowDeclarations = {
   [K in FlowIdFromFlowRequest<FlowRequest>]: FlowDeclaration<
     Extract<FlowRequest, { flowId: K }>,
-    ExtractStepId<typeof flowDeclarations[K]>
+    ExtractStepId<(typeof flowDeclarations)[K]>
   >;
 };
 
 export type FlowId = keyof FlowDeclarations;
 
-function getFlowDeclaration<
-  T extends FlowIdFromFlowRequest<FlowRequest>,
->(flowId: T): FlowDeclaration<
+function getFlowDeclaration<T extends FlowIdFromFlowRequest<FlowRequest>>(
+  flowId: T
+): FlowDeclaration<
   Extract<FlowRequest, { flowId: T }>,
-  ExtractStepId<typeof flowDeclarations[T]>
+  ExtractStepId<(typeof flowDeclarations)[T]>
 > {
   return flowDeclarations[flowId];
 }
 
 export type FlowIdFromFlowRequest<FR extends FlowRequest> = FR["flowId"];
-export type FlowRequestFromFlowId<FI extends FlowId> = Extract<FlowRequest, { flowId: FI }>;
-export type FlowContextFromFlowId<FI extends FlowId> = FlowContext<FlowRequestFromFlowId<FI>>;
+export type FlowRequestFromFlowId<FI extends FlowId> = Extract<
+  FlowRequest,
+  { flowId: FI }
+>;
+export type FlowContextFromFlowId<FI extends FlowId> = FlowContext<
+  FlowRequestFromFlowId<FI>
+>;
 
 export const FlowStepsSchema = v.union([
   v.null(),
@@ -155,33 +154,31 @@ export const FlowStepsSchema = v.union([
         txReceiptData: v.union([v.null(), v.string()]),
         txStatus: v.literal("confirmed"),
       }),
-    ]),
+    ])
   ),
 ]);
 
 type FlowStepUpdate =
   | {
-    error: string;
-    txHash: null | `0x${string}`;
-    txStatus: "error";
-    txReceiptData: null;
-  }
+      error: string;
+      txHash: null | `0x${string}`;
+      txStatus: "error";
+      txReceiptData: null;
+    }
   | {
-    error: null;
-    txHash: null | `0x${string}`;
-    txStatus: "idle" | "awaiting-signature" | "awaiting-confirmation";
-    txReceiptData: null;
-  }
+      error: null;
+      txHash: null | `0x${string}`;
+      txStatus: "idle" | "awaiting-signature" | "awaiting-confirmation";
+      txReceiptData: null;
+    }
   | {
-    error: null;
-    txHash: `0x${string}`;
-    txStatus: "confirmed";
-    txReceiptData: null | string;
-  };
+      error: null;
+      txHash: `0x${string}`;
+      txStatus: "confirmed";
+      txReceiptData: null | string;
+    };
 
-export type FlowSteps = NonNullable<
-  v.InferOutput<typeof FlowStepsSchema>
->;
+export type FlowSteps = NonNullable<v.InferOutput<typeof FlowStepsSchema>>;
 
 export type FlowStepStatus = FlowSteps[number]["txStatus"];
 
@@ -219,11 +216,13 @@ type FlowArgs<FR extends FlowRequest> = {
   wagmiConfig: ReturnType<typeof useWagmiConfig>;
 };
 
-type GetStepsFn<FR extends FlowRequest, StepId extends string> = (args: FlowArgs<FR>) => Promise<StepId[]>;
+type GetStepsFn<FR extends FlowRequest, StepId extends string> = (
+  args: FlowArgs<FR>
+) => Promise<StepId[]>;
 
 type WriteContractParamsFn<FR extends FlowRequest, StepId extends string> = (
   stepId: StepId,
-  args: FlowArgs<FR>,
+  args: FlowArgs<FR>
 ) => Promise<null | WriteContractParameters>;
 
 export type FlowDeclaration<
@@ -234,10 +233,13 @@ export type FlowDeclaration<
   Summary: ComponentType<{ flow: FlowContext<FR> }>;
   Details: ComponentType<{ flow: FlowContext<FR> }>;
   getSteps: GetStepsFn<FR, StepId>;
-  getStepName: (stepId: StepId, args: {
-    contracts: Contracts;
-    request: FR;
-  }) => string;
+  getStepName: (
+    stepId: StepId,
+    args: {
+      contracts: Contracts;
+      request: FR;
+    }
+  ) => string;
   parseRequest: (request: unknown) => FR | null;
   parseReceipt?: (
     stepId: StepId,
@@ -245,7 +247,7 @@ export type FlowDeclaration<
     args: {
       contracts: Contracts;
       request: FR;
-    },
+    }
   ) => null | string;
   writeContractParams: WriteContractParamsFn<FR, StepId>;
 };
@@ -257,7 +259,10 @@ type Context<FR extends FlowRequest = FlowRequest> = {
   signAndSend: () => Promise<void>;
   start: (request: FR) => void;
   flow: null | FlowContext<FR>;
-  flowDeclaration: null | FlowDeclaration<FR, ExtractStepId<typeof flowDeclarations[FR["flowId"]]>>;
+  flowDeclaration: null | FlowDeclaration<
+    FR,
+    ExtractStepId<(typeof flowDeclarations)[FR["flowId"]]>
+  >;
 };
 
 const TransactionFlowContext = createContext<Context>({
@@ -284,25 +289,30 @@ export function TransactionFlow({ children }: { children: ReactNode }) {
 
   const currentStepIndex = getCurrentStepIndex(flow);
 
-  const declaration = flow?.request.flowId ? getFlowDeclaration(flow.request.flowId) : null;
+  const declaration = flow?.request.flowId
+    ? getFlowDeclaration(flow.request.flowId)
+    : null;
 
   // initiate a new transaction flow (triggers fetching the steps)
-  const start: Context["start"] = useCallback((request) => {
-    if (!account.address) {
-      return;
-    }
+  const start: Context["start"] = useCallback(
+    (request) => {
+      if (!account.address) {
+        return;
+      }
 
-    const newFlow = {
-      account: account.address,
-      request,
-      steps: null,
-    };
+      const newFlow = {
+        account: account.address,
+        request,
+        steps: null,
+      };
 
-    setFlowAndStatus({ flow: newFlow });
-    FlowContextStorage.set(newFlow);
+      setFlowAndStatus({ flow: newFlow });
+      FlowContextStorage.set(newFlow);
 
-    router.push("/transactions");
-  }, [account]);
+      router.push("/transactions");
+    },
+    [account]
+  );
 
   // discard the current transaction flow (remove it from local storage)
   const discard: Context["discard"] = useCallback(() => {
@@ -318,9 +328,10 @@ export function TransactionFlow({ children }: { children: ReactNode }) {
 
     const newFlow = {
       ...flow,
-      steps: flow.steps?.map((step, index_) => (
-        index_ === index ? { ...step, ...update } : step
-      )) ?? null,
+      steps:
+        flow.steps?.map((step, index_) =>
+          index_ === index ? { ...step, ...update } : step
+        ) ?? null,
     };
 
     // update state + local storage
@@ -331,10 +342,10 @@ export function TransactionFlow({ children }: { children: ReactNode }) {
   useSteps({
     flow,
     enabled: Boolean(
-      flow
-        && account.address
-        && flow.account === account.address
-        && flow.steps === null,
+      flow &&
+        account.address &&
+        flow.account === account.address &&
+        flow.steps === null
     ),
     account,
     contracts,
@@ -417,9 +428,11 @@ export function TransactionFlow({ children }: { children: ReactNode }) {
   const currentStep = flow?.steps?.[currentStepIndex];
 
   const txReceipt = useTransactionReceipt({
-    hash: contractWrite.data ?? (
-      (currentStep?.txStatus === "awaiting-confirmation" && currentStep.txHash) || undefined
-    ),
+    hash:
+      contractWrite.data ??
+      ((currentStep?.txStatus === "awaiting-confirmation" &&
+        currentStep.txHash) ||
+        undefined),
     query: {
       retry: true,
     },
@@ -430,7 +443,13 @@ export function TransactionFlow({ children }: { children: ReactNode }) {
   const signAndSend = useCallback(async () => {
     const currentStepId = flow?.steps?.[currentStepIndex]?.id;
 
-    if (!currentStepId || currentStepIndex < 0 || !account || !flow || !flowDeclaration) {
+    if (
+      !currentStepId ||
+      currentStepIndex < 0 ||
+      !account ||
+      !flow ||
+      !flowDeclaration
+    ) {
       return;
     }
 
@@ -452,7 +471,6 @@ export function TransactionFlow({ children }: { children: ReactNode }) {
     currentStepIndex,
     flow,
     flowDeclaration,
-    updateStep,
     wagmiConfig,
   ]);
 
@@ -487,11 +505,12 @@ export function TransactionFlow({ children }: { children: ReactNode }) {
       updateStep(currentStepIndex, {
         error: null,
         txHash: txReceipt.data.transactionHash,
-        txReceiptData: declaration?.parseReceipt?.(
-          flow?.steps?.[currentStepIndex]?.id ?? "",
-          txReceipt.data,
-          { contracts, request: flow.request },
-        ) ?? null,
+        txReceiptData:
+          declaration?.parseReceipt?.(
+            flow?.steps?.[currentStepIndex]?.id ?? "",
+            txReceipt.data,
+            { contracts, request: flow.request }
+          ) ?? null,
         txStatus: "confirmed",
       });
       queryClient.invalidateQueries();
@@ -499,8 +518,11 @@ export function TransactionFlow({ children }: { children: ReactNode }) {
     }
   }, [
     contractWrite,
+    contracts,
     currentStepIndex,
     declaration,
+    flow?.request,
+    flow?.steps,
     queryClient,
     totalSteps,
     txReceipt,
@@ -599,7 +621,10 @@ const FlowContextStorage = {
   get(): FlowContext<FlowRequest> | null {
     try {
       const storedState = localStorage.getItem(TRANSACTION_FLOW_KEY) ?? "";
-      const { request, steps, account } = v.parse(FlowStateSchema, jsonParseWithDnum(storedState));
+      const { request, steps, account } = v.parse(
+        FlowStateSchema,
+        jsonParseWithDnum(storedState)
+      );
       const declaration = getFlowDeclaration(request.flowId);
       const parsedRequest = declaration.parseRequest(request);
       const parsedSteps = v.parse(FlowStepsSchema, steps);
