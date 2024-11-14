@@ -3,15 +3,19 @@
 import { Amount } from "@/src/comps/Amount/Amount";
 import { Logo } from "@/src/comps/Logo/Logo";
 import { getContracts } from "@/src/contracts";
+import { useAccount } from "@/src/services/Ethereum";
 import { useAllPrices } from "@/src/services/Prices";
 import { useTotalDeposited } from "@/src/subgraph-hooks";
 import { css } from "@/styled-system/css";
-import { HFlex, TokenIcon } from "@liquity2/uikit";
+import { AnchorTextButton, HFlex, shortenAddress, TokenIcon } from "@liquity2/uikit";
+import { blo } from "blo";
 import * as dn from "dnum";
+import Image from "next/image";
 
 const DISPLAYED_PRICES = ["USDN", "ETH"] as const;
 
 export function ProtocolStats() {
+  const account = useAccount();
   const prices = useAllPrices();
   const totalDeposited = useTotalDeposited();
 
@@ -49,12 +53,18 @@ export function ProtocolStats() {
             <Amount fallback='…' format='compact' prefix='$' value={tvl} />
           </span>
         </HFlex>
-        <HFlex gap={32}>
+        <HFlex gap={16}>
           {DISPLAYED_PRICES.map((symbol) => {
             const price = prices[symbol];
             return (
-              <HFlex key={symbol} gap={16}>
-                <TokenIcon size={16} symbol={symbol} />
+              <HFlex
+                key={symbol}
+                gap={8}
+              >
+                <TokenIcon
+                  size={16}
+                  symbol={symbol}
+                />
                 <HFlex gap={8}>
                   <span>{symbol}</span>
                   <Amount prefix='$' fallback='…' value={price} format='2z' />
@@ -62,6 +72,31 @@ export function ProtocolStats() {
               </HFlex>
             );
           })}
+          {account.address && (
+            <AnchorTextButton
+              href={`/account?address=${account.address}`}
+              label={
+                <HFlex gap={8} alignItems="center">
+                  <Image
+                    alt=""
+                    width={16}
+                    height={16}
+                    src={blo(account.address)}
+                    className={css({
+                      borderRadius: "50%",
+                    })}
+                  />
+
+                  <HFlex gap={8}>
+                    <span>{shortenAddress(account.address, 3)}</span>
+                  </HFlex>
+                </HFlex>
+              }
+              className={css({
+                color: "content",
+              })}
+            />
+          )}
         </HFlex>
       </div>
     </div>

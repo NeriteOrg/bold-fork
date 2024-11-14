@@ -1,16 +1,15 @@
 import type { FlowDeclaration } from "@/src/services/TransactionFlow";
 
+import { getBuiltGraphSDK } from "@/.graphclient";
 import { Amount } from "@/src/comps/Amount/Amount";
 import { ETH_GAS_COMPENSATION } from "@/src/constants";
 import { dnum18 } from "@/src/dnum-utils";
 import { fmtnum } from "@/src/formatting";
-import {
-  getCollToken,
-  usePredictOpenTroveUpfrontFee,
-} from "@/src/liquity-utils";
+import { getCollToken, getPrefixedTroveId, usePredictOpenTroveUpfrontFee } from "@/src/liquity-utils";
 import { LoanCard } from "@/src/screens/TransactionsScreen/LoanCard";
 import { TransactionDetailsRow } from "@/src/screens/TransactionsScreen/TransactionsScreen";
 import { usePrice } from "@/src/services/Prices";
+import { isTroveId } from "@/src/types";
 import { vAddress, vCollIndex, vDnum } from "@/src/valibot-utils";
 import {
   ADDRESS_ZERO,
@@ -82,7 +81,7 @@ export const openBorrowPosition: FlowDeclaration<Request, Step> = {
         loadingState='success'
         loan={{
           type: "borrow",
-          troveId: "0x",
+          troveId: null,
           borrower: request.owner,
           batchManager: request.interestRateDelegate?.[0] ?? null,
           borrowed: boldAmountWithFee ?? dnum18(0),
@@ -195,9 +194,9 @@ export const openBorrowPosition: FlowDeclaration<Request, Step> = {
       return ["openTroveEth"];
     }
 
-    const { GasCompZapper, CollToken } = collateral.contracts;
+    const { LeverageLSTZapper, CollToken } = collateral.contracts;
 
-    if (!GasCompZapper || !CollToken) {
+    if (!LeverageLSTZapper || !CollToken) {
       throw new Error(`Collateral ${collateral.symbol} not supported`);
     }
 
@@ -205,8 +204,11 @@ export const openBorrowPosition: FlowDeclaration<Request, Step> = {
       await readContract(wagmiConfig, {
         ...CollToken,
         functionName: "allowance",
-        args: [account.address ?? ADDRESS_ZERO, GasCompZapper.address],
-      })
+        args: [
+          account.address ?? ADDRESS_ZERO,
+          LeverageLSTZapper.address,
+        ],
+      }),
     );
 
     const isApproved = !dn.gt(
@@ -240,7 +242,8 @@ export const openBorrowPosition: FlowDeclaration<Request, Step> = {
 
   parseReceipt(stepId, receipt, { request, contracts }): string | null {
     const collateral = contracts.collaterals[request.collIndex];
-    if (stepId === "openTroveEth") {
+
+    if (stepId === "openTroveEth" || stepId === "openTroveLst") {
       const [troveOperation] = parseEventLogs({
         abi: collateral.contracts.TroveManager.abi,
         logs: receipt.logs,
@@ -250,14 +253,15 @@ export const openBorrowPosition: FlowDeclaration<Request, Step> = {
         return "0x" + troveOperation.args._troveId.toString(16);
       }
     }
+
     return null;
   },
 
   async writeContractParams(stepId, { contracts, request }) {
     const collateral = contracts.collaterals[request.collIndex];
 
-    const { GasCompZapper, CollToken } = collateral.contracts;
-    if (!GasCompZapper || !CollToken) {
+    const { LeverageLSTZapper, CollToken } = collateral.contracts;
+    if (!LeverageLSTZapper || !CollToken) {
       throw new Error(`Collateral ${collateral.symbol} not supported`);
     }
 
@@ -265,14 +269,17 @@ export const openBorrowPosition: FlowDeclaration<Request, Step> = {
       return {
         ...CollToken,
         functionName: "approve" as const,
-        args: [GasCompZapper.address, request.collAmount[0]],
+        args: [
+          LeverageLSTZapper.address,
+          request.collAmount[0],
+        ],
       };
     }
 
-    // WETHZapper (WETH) mode
+    // LeverageWETHZapper mode
     if (stepId === "openTroveEth") {
       return {
-        ...collateral.contracts.WETHZapper,
+        ...collateral.contracts.LeverageWETHZapper,
         functionName: "openTroveWithRawETH" as const,
         args: [
           {
@@ -298,10 +305,10 @@ export const openBorrowPosition: FlowDeclaration<Request, Step> = {
       };
     }
 
-    // GasCompZapper (LST) mode
+    // LeverageLSTZapper mode
     if (stepId === "openTroveLst") {
       return {
-        ...collateral.contracts.GasCompZapper,
+        ...collateral.contracts.LeverageLSTZapper,
         functionName: "openTroveWithRawETH" as const,
         args: [
           {
@@ -328,5 +335,25 @@ export const openBorrowPosition: FlowDeclaration<Request, Step> = {
     }
 
     throw new Error("Not implemented");
+  },
+
+  async postFlowCheck({ request, steps }) {
+    const lastStep = steps?.at(-1);
+
+    if (lastStep?.txStatus !== "post-check" || !isTroveId(lastStep.txReceiptData)) {
+      return;
+    }
+
+    const prefixedTroveId = getPrefixedTroveId(
+      request.collIndex,
+      lastStep.txReceiptData,
+    );
+
+    const graph = getBuiltGraphSDK();
+
+    while (true) {
+      const { trove } = await graph.TroveById({ id: prefixedTroveId });
+      if (trove !== null) return;
+    }
   },
 };

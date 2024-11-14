@@ -8,7 +8,7 @@ import {
   INTEREST_RATE_MIN,
 } from "@/src/constants";
 import content from "@/src/content";
-import { DELEGATES_FULL, IC_STRATEGIES } from "@/src/demo-mode";
+import { IC_STRATEGIES } from "@/src/demo-mode";
 import { useInputFieldValue } from "@/src/form-utils";
 import { fmtnum, formatRedemptionRisk } from "@/src/formatting";
 import { getRedemptionRisk } from "@/src/liquity-math";
@@ -37,57 +37,18 @@ import {
 import { blo } from "blo";
 import * as dn from "dnum";
 import Image from "next/image";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { match } from "ts-pattern";
 
 import icLogo from "./ic-logo.svg";
 
 export type DelegateMode = "manual" | "strategy" | "delegate";
 
-const DELEGATE_MODES: Array<{
-  label: string;
-  secondary: string;
-  type: DelegateMode;
-}> = [
-  {
-    label: "Manual",
-    secondary:
-      "The interest rate is set manually and can be updated at any time.",
-    type: "manual",
-  },
-  {
-    label: "Delegated",
-    secondary:
-      "The interest rate is set and updated by a third party of your choice. They may charge a fee.",
-    type: "delegate",
-  },
-  {
-    label: "Automated (ICP)",
-    secondary:
-      "The interest rate is set and updated by an automated strategy running on the decentralized Internet Computer (ICP).",
-    type: "strategy",
-  },
-] as const;
-
-const IC_STRATEGY_MODAL = {
-  title: (
-    <>
-      Automated Strategies (<abbr title='Internet Computer'>ICP</abbr>)
-    </>
-  ),
-  intro: (
-    <>
-      These strategies are run on the Internet Computer (ICP). They are
-      automated and decentralized. More strategies will be added over time.
-    </>
-  ),
-};
-
-const DELEGATES_MODAL = {
-  title: "Set a delegate",
-  intro:
-    "The interest rate is set and updated by a third party of your choice. They may charge a fee.",
-};
+const DELEGATE_MODES: DelegateMode[] = [
+  "manual",
+  "delegate",
+  "strategy",
+];
 
 export function InterestRateField({
   collIndex,
@@ -134,6 +95,12 @@ export function InterestRateField({
     ({ rate }) => rate === interestRateNumber
   );
   const boldRedeemableInFront = chartdataPoint?.debtInFront ?? dn.from(0, 18);
+
+  const handleDelegateSelect = (delegate: Delegate) => {
+    setDelegatePicker(null);
+    onChange(delegate.interestRate);
+    onDelegateChange(delegate.address ?? null);
+  };
 
   return (
     <>
@@ -230,23 +197,26 @@ export function InterestRateField({
           end: (
             <div>
               <Dropdown
-                items={DELEGATE_MODES.map((item) => ({
-                  label: item.label,
-                  secondary: item.secondary,
-                  disabled: item.type === "strategy",
-                  disabledReason: "Coming soon",
-                }))}
+                items={DELEGATE_MODES.map((mode) => {
+                  const modeContent = content.interestRateField.delegateModes[mode];
+                  return ({
+                    label: modeContent.label,
+                    secondary: modeContent.secondary,
+                    disabled: mode === "strategy",
+                    disabledReason: "Coming soon",
+                  });
+                })}
                 menuWidth={300}
                 menuPlacement='end'
                 onSelect={(index) => {
                   const mode = DELEGATE_MODES[index];
                   if (mode) {
-                    onModeChange(DELEGATE_MODES[index].type);
+                    onModeChange(mode);
                   }
                   onDelegateChange(null);
                 }}
-                selected={DELEGATE_MODES.findIndex(({ type }) => type === mode)}
-                size='small'
+                selected={DELEGATE_MODES.findIndex((mode_) => mode_ === mode)}
+                size="small"
               />
             </div>
           ),
@@ -334,8 +304,15 @@ export function InterestRateField({
               gap: 10,
             })}
           >
-            <div>{IC_STRATEGY_MODAL.title}</div>
-            <Image alt='' src={icLogo} width={24} height={24} />
+            <div>
+              {content.interestRateField.icStrategyModal.title}
+            </div>
+            <Image
+              alt=""
+              src={icLogo}
+              width={24}
+              height={24}
+            />
           </div>
         }
         visible={delegatePicker === "strategy"}
@@ -344,33 +321,22 @@ export function InterestRateField({
           collIndex={collIndex}
           chooseLabel='Choose'
           delegates={IC_STRATEGIES}
-          intro={IC_STRATEGY_MODAL.intro}
-          onSelectDelegate={(id) => {
-            setDelegatePicker(null);
-            const delegate = DELEGATES_FULL.find((s) => s.id === id);
-            if (delegate) {
-              onChange(delegate.interestRate);
-            }
-            onDelegateChange(delegate?.address ?? null);
-          }}
+          intro={content.interestRateField.icStrategyModal.intro}
+          onSelectDelegate={handleDelegateSelect}
         />
       </Modal>
       <Modal
         onClose={() => {
           setDelegatePicker(null);
         }}
-        title={DELEGATES_MODAL.title}
+        title={content.interestRateField.delegatesModal.title}
         visible={delegatePicker === "delegate"}
       >
         <CustomDelegateModalContent
           collIndex={collIndex}
-          chooseLabel='Set delegate'
-          intro={DELEGATES_MODAL.intro}
-          onSelectDelegate={(delegate) => {
-            setDelegatePicker(null);
-            onChange(delegate.interestRate);
-            onDelegateChange(delegate.address ?? null);
-          }}
+          chooseLabel="Set delegate"
+          intro={content.interestRateField.delegatesModal.intro}
+          onSelectDelegate={handleDelegateSelect}
         />
       </Modal>
     </>
@@ -508,7 +474,7 @@ function DelegatesModalContent({
   delegates?: Delegate[];
   chooseLabel: string;
   intro: ReactNode;
-  onSelectDelegate: (id: Delegate["id"]) => void;
+  onSelectDelegate: (delegate: Delegate) => void;
 }) {
   const [displayedDelegates, setDisplayedDelegates] = useState(5);
   return (
@@ -561,27 +527,35 @@ function DelegatesModalContent({
   );
 }
 
-function MiniChart({ size = "small" }: { size?: "small" | "medium" }) {
-  return size === "medium" ? (
-    <svg width='45' height='18' fill='none'>
-      <path
-        stroke='#9EA2B8'
-        strokeLinecap='round'
-        strokeWidth='1.5'
-        d='m1 10.607 1.66 2.61a2 2 0 0 0 1.688.926H7.31c.29 0 .576.063.84.185l4.684 2.168a2 2 0 0 0 2.142-.296l2.995-2.568a2 2 0 0 0 .662-1.137l1.787-9.191a2 2 0 0 1 .318-.756l.096-.138a2 2 0 0 1 3.303.02l1.421 2.107a2 2 0 0 1 .278.616l1.295 4.996a2 2 0 0 0 .431.815l1.691 1.932c.163.187.29.402.375.635l.731 2.015a2 2 0 0 0 3.029.955l.079-.056a2 2 0 0 0 .744-.99l2.539-7.42 2.477-5.005a2 2 0 0 1 2.924-.762L44 3.536'
-      />
-    </svg>
-  ) : (
-    <svg width='28' height='16' fill='none'>
-      <path
-        stroke='#9EA2B8'
-        strokeLinecap='round'
-        strokeWidth='1.5'
-        d='m2 8.893.618 1.009a2 2 0 0 0 1.706.955h.83a2 2 0 0 1 .867.198l1.731.832a2 2 0 0 0 2.197-.309l.901-.802a2 2 0 0 0 .636-1.126l.902-4.819c.028-.148.085-.288.169-.414v0a1.119 1.119 0 0 1 1.87.011l.64.986c.113.175.197.368.248.571l.613 2.458a2 2 0 0 0 .411.804l.686.814c.145.172.257.37.332.582l.339.97a1.09 1.09 0 0 0 1.671.522v0a1.09 1.09 0 0 0 .394-.54l1.361-4.13.847-1.778a2 2 0 0 1 2.966-.77l.065.047'
-      />
-    </svg>
+const MiniChart = memo(function MiniChart({
+  size = "small",
+}: {
+  size?: "small" | "medium";
+}) {
+  return (
+    size === "medium"
+      ? (
+        <svg width="45" height="18" fill="none">
+          <path
+            stroke="#9EA2B8"
+            strokeLinecap="round"
+            strokeWidth="1.5"
+            d="m1 10.607 1.66 2.61a2 2 0 0 0 1.688.926H7.31c.29 0 .576.063.84.185l4.684 2.168a2 2 0 0 0 2.142-.296l2.995-2.568a2 2 0 0 0 .662-1.137l1.787-9.191a2 2 0 0 1 .318-.756l.096-.138a2 2 0 0 1 3.303.02l1.421 2.107a2 2 0 0 1 .278.616l1.295 4.996a2 2 0 0 0 .431.815l1.691 1.932c.163.187.29.402.375.635l.731 2.015a2 2 0 0 0 3.029.955l.079-.056a2 2 0 0 0 .744-.99l2.539-7.42 2.477-5.005a2 2 0 0 1 2.924-.762L44 3.536"
+          />
+        </svg>
+      )
+      : (
+        <svg width="28" height="16" fill="none">
+          <path
+            stroke="#9EA2B8"
+            strokeLinecap="round"
+            strokeWidth="1.5"
+            d="m2 8.893.618 1.009a2 2 0 0 0 1.706.955h.83a2 2 0 0 1 .867.198l1.731.832a2 2 0 0 0 2.197-.309l.901-.802a2 2 0 0 0 .636-1.126l.902-4.819c.028-.148.085-.288.169-.414v0a1.119 1.119 0 0 1 1.87.011l.64.986c.113.175.197.368.248.571l.613 2.458a2 2 0 0 0 .411.804l.686.814c.145.172.257.37.332.582l.339.97a1.09 1.09 0 0 0 1.671.522v0a1.09 1.09 0 0 0 .394-.54l1.361-4.13.847-1.778a2 2 0 0 1 2.966-.77l.065.047"
+          />
+        </svg>
+      )
   );
-}
+});
 
 function ShadowBox({ children }: { children: ReactNode }) {
   return (

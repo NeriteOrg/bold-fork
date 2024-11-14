@@ -1,7 +1,8 @@
-import type { PrefixedTroveId } from "@/src/types";
+import type { PrefixedTroveId, TroveId } from "@/src/types";
 import type { Address } from "@liquity2/uikit";
 import type { Dnum } from "dnum";
 
+import { isPrefixedtroveId, isTroveId } from "@/src/types";
 import { isAddress } from "@liquity2/uikit";
 import { isDnum } from "dnum";
 import * as v from "valibot";
@@ -36,12 +37,19 @@ export function vCollIndex() {
   ]);
 }
 
+export function vTroveId() {
+  return v.pipe(
+    v.string(),
+    v.trim(),
+    v.custom<TroveId>(isTroveId, "not a valid Trove ID"),
+  );
+}
+
 export function vPrefixedTroveId() {
   return v.pipe(
     v.string(),
     v.trim(),
-    v.regex(/^[0-9]:0x[0-9a-f]+$/),
-    v.transform((value) => value as PrefixedTroveId),
+    v.custom<PrefixedTroveId>(isPrefixedtroveId, "not a valid prefixed Trove ID"),
   );
 }
 
@@ -132,4 +140,44 @@ export function vPositionStake() {
       eth: vDnum(),
     }),
   });
+}
+
+const VPositionLoanBase = v.object({
+  type: v.union([
+    v.literal("borrow"),
+    v.literal("leverage"),
+  ]),
+  batchManager: v.union([v.null(), vAddress()]),
+  borrowed: vDnum(),
+  borrower: vAddress(),
+  collIndex: vCollIndex(),
+  deposit: vDnum(),
+  interestRate: vDnum(),
+});
+
+export function vPositionLoanCommited() {
+  return v.intersect([
+    VPositionLoanBase,
+    v.object({
+      troveId: vTroveId(),
+      updatedAt: v.number(),
+      createdAt: v.number(),
+    }),
+  ]);
+}
+
+export function vPositionLoanUncommited() {
+  return v.intersect([
+    VPositionLoanBase,
+    v.object({
+      troveId: v.null(),
+    }),
+  ]);
+}
+
+export function vPositionLoan() {
+  return v.intersect([
+    vPositionLoanCommited(),
+    vPositionLoanUncommited(),
+  ]);
 }

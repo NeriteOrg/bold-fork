@@ -14,7 +14,6 @@ import "../Zappers/Modules/Exchanges/UniswapV3/IQuoterV2.sol";
 import "../Zappers/Modules/Exchanges/HybridCurveUniV3Exchange.sol";
 import "../Zappers/Interfaces/IFlashLoanProvider.sol";
 import "../Zappers/Modules/FlashLoans/Balancer/vault/IVault.sol";
-import "./Utils/UniPriceConverter.sol";
 
 import "../Zappers/Modules/Exchanges/Curve/ICurveStableswapNGFactory.sol";
 
@@ -37,7 +36,7 @@ contract ZapperLeverageMainnet is DevTestSetup {
     uint24 constant UNIV3_FEE_USDC_WETH = 500; // 0.05%
     uint24 constant UNIV3_FEE_WETH_COLL = 100; // 0.01%
 
-    uint256 constant NUM_COLLATERALS = 5;
+    uint256 constant NUM_COLLATERALS = 3;
 
     IZapper[] baseZapperArray;
     ILeverageZapper[] leverageZapperCurveArray;

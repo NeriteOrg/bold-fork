@@ -163,6 +163,7 @@ contract TroveManager is LiquityBase, ITroveManager, ITroveEvents {
     error CallerNotCollateralRegistry();
     error OnlyOneTroveLeft();
     error NotShutDown();
+    error ZeroAmount();
     error NotEnoughBoldBalance();
     error MinCollNotReached(uint256 _coll);
     error BatchSharesRatioTooHigh();
@@ -841,11 +842,13 @@ contract TroveManager is LiquityBase, ITroveManager, ITroveEvents {
 
     function urgentRedemption(uint256 _boldAmount, uint256[] calldata _troveIds, uint256 _minCollateral) external {
         _requireIsShutDown();
+        _requireAmountGreaterThanZero(_boldAmount);
         _requireBoldBalanceCoversRedemption(boldToken, msg.sender, _boldAmount);
 
         IActivePool activePoolCached = activePool;
         TroveChange memory totalsTroveChange;
 
+        // Use the standard fetchPrice here, since if branch has shut down we don't worry about small redemption arbs
         (uint256 price,) = priceFeed.fetchPrice();
 
         uint256 remainingBold = _boldAmount;
@@ -1162,6 +1165,12 @@ contract TroveManager is LiquityBase, ITroveManager, ITroveEvents {
         }
     }
 
+    function _requireAmountGreaterThanZero(uint256 _amount) internal pure {
+        if (_amount == 0) {
+            revert ZeroAmount();
+        }
+    }
+
     function _requireBoldBalanceCoversRedemption(IBoldToken _boldToken, address _redeemer, uint256 _amount)
         internal
         view
@@ -1179,7 +1188,7 @@ contract TroveManager is LiquityBase, ITroveManager, ITroveEvents {
         uint256 spSize = stabilityPool.getTotalBoldDeposits();
         uint256 unbackedPortion = totalDebt > spSize ? totalDebt - spSize : 0;
 
-        (uint256 price,) = priceFeed.fetchPrice();
+        (uint256 price,) = priceFeed.fetchRedemptionPrice();
         // It's redeemable if the TCR is above the shutdown threshold, and branch has not been shut down
         bool redeemable = _getTCR(price) >= SCR && shutdownTime == 0;
 
@@ -1265,7 +1274,9 @@ contract TroveManager is LiquityBase, ITroveManager, ITroveEvents {
         TroveIds.push(_troveId);
 
         assert(_troveChange.debtIncrease > 0); // TODO: remove before deployment
-        _updateBatchShares(_troveId, _batchAddress, _troveChange, _troveChange.debtIncrease, _batchColl, _batchDebt, true);
+        _updateBatchShares(
+            _troveId, _batchAddress, _troveChange, _troveChange.debtIncrease, _batchColl, _batchDebt, true
+        );
 
         uint256 newTotalStakes = totalStakes + newStake;
         totalStakes = newTotalStakes;
@@ -1717,7 +1728,13 @@ contract TroveManager is LiquityBase, ITroveManager, ITroveEvents {
         _troveChange.debtIncrease = _params.troveDebt - _troveChange.appliedRedistBoldDebtGain - _troveChange.upfrontFee;
         assert(_params.troveDebt > 0); // TODO: remove before deployment
         _updateBatchShares(
-            _params.troveId, _params.newBatchAddress, _troveChange, _params.troveDebt, _params.newBatchColl, _params.newBatchDebt, true
+            _params.troveId,
+            _params.newBatchAddress,
+            _troveChange,
+            _params.troveDebt,
+            _params.newBatchColl,
+            _params.newBatchDebt,
+            true
         );
 
         _movePendingTroveRewardsToActivePool(
